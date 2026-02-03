@@ -10,23 +10,20 @@ const Z_OVER = 90;
 
 // ---- data ----
 const JOKES = [
-  { label: "DINOSAUR", q: "What were prehistoric sleepovers called?", a: "Dino-SNORES." },
+  { label: "∆π¡)*#¡˚Â¯Ç", q: "What were prehistoric sleepovers called?", a: "Dino-SNORES." },
   { label: "BEE", q: "What’s a <em>bee</em>’s favorite musical?", a: "Stinging in the Rain." },
   { label: "COW", q: "What kind of <em>cow</em> wears a crown?", a: "A dairy queen." },
   { label: "TURKEY", q: "What do <em>turkeys</em> like to eat for dessert?", a: "Apple Gobbler." },
   { label: "STORK", q: "Why do <em>storks</em> have so little money?", a: "They have such big bills." },
   { label: "CROCODILE", q: "Which reptile always knows what time it is?", a: "A grandfather croc." },
-
   { label: "HORSE", q: "Can a <em>horse</em> join the army?", a: "No, the Neigh-vy." },
   { label: "BEE", q: "Can <em>bees</em> fly in the rain?", a: "Not without their little yellow jackets." },
-
   { label: "SKUNK", q: "Did you hear the story about the <em>skunk</em>?", a: "Never mind—it stinks." },
   { label: "BIRD", q: "How are migrating <em>birds</em> different from flies?", a: "Birds fly, but flies don’t bird." },
   { label: "BEE", q: "How can you tell if a <em>bee</em> is talking on a cell phone?", a: "You get a buzzy signal." },
   { label: "WORM", q: "How can you tell which end of a <em>worm</em> is the head?", a: "Tickle it in the middle, see which end laughs." },
   { label: "WORM", q: "How can you tell <em>worms</em> from spaghetti?", a: "Worms can hang on to your fork." },
   { label: "FROG", q: "How come <em>frogs</em> are such good liars?", a: "Because they’re amFIBians." },
-
   { label: "CALF", q: "How did one <em>calf</em> finish his math problems faster than the other calves?", a: "It used a COW-culator." },
   { label: "DUCK", q: "How did the <em>duck</em> get rid of its headache?", a: "With quack-upuncture." },
   { label: "FARMER", q: "How did the farmer count his herd of cattle?", a: "He used a COWculator." },
@@ -35,7 +32,6 @@ const JOKES = [
   { label: "HORSE", q: "How did the <em>horse</em> get a soda?", a: "He gave the vending machine a buck." },
   { label: "SNAKE", q: "How did the <em>snake</em> escape from jail?", a: "It scaled the wall." },
   { label: "GEESE", q: "How do baby <em>geese</em> get out of their shells?", a: "They follow eggs-it signs." },
-
   { label: "BIRD", q: "How do <em>birds</em> fly in the rain?", a: "They use wing shield wipers." },
   { label: "BIRD", q: "How do <em>birds</em> keep in shape?", a: "They do a lot of eggs-ercises." },
   { label: "BULL", q: "How do <em>bulls</em> pay for their groceries?", a: "They charge them." },
@@ -51,7 +47,7 @@ const JOKES = [
   { label: "WHALE", q: "How do groups of <em>whales</em> listen to music?", a: "They use their i-PODS." },
   { label: "JACKRABBIT", q: "How do <em>jackrabbits</em> keep cool in the dessert?", a: "They use ear-conditioning." },
   { label: "MONKEY", q: "How do <em>monkeys</em> go downstairs?", a: "They slide down the banana-ster." },
-  { label: "CRAB", q: "How do ocean creatures cross the ocean?", a: "By taxi crab." },
+  { label: "∂ç˜≤µœ", q: "How do ocean creatures cross the ocean?", a: "By taxi crab." },
   { label: "PORCUPINE", q: "How do <em>porcupines</em> communicate?", a: "Through spine language." },
   { label: "PORCUPINE", q: "How do <em>porcupines</em> hug and kiss?", a: "Very carefully." },
   { label: "PORCUPINE", q: "How do <em>porcupines</em> play leapfrog?", a: "Very carefully." },
@@ -68,7 +64,6 @@ const JOKES = [
   { label: "TURKEY", q: "How do <em>turkeys</em> wake their friends on Thanksgiving morning?", a: "With alarm clucks." },
   { label: "TYRANNOSAUR", q: "How do tyrannosaurs like their eggs?", a: "Terri-fried!" },
   { label: "WASP", q: "How do <em>wasps</em> communicate?", a: "Through bee-mail." },
-
   { label: "CHEETAH", q: "How do you find a <em>cheetah</em> at night?", a: "Use a spotlight." },
   { label: "MOSQUITO", q: "How do you find your <em>mosquito</em> bites?", a: "Start from scratch." },
   { label: "FROG", q: "How do you get a <em>frog</em> off your back car window?", a: "Use a rear-window defrogger." },
@@ -77,14 +72,11 @@ const JOKES = [
   { label: "BEE", q: "How do you know when a <em>bee</em> is talking on the phone?", a: "You hear a buzzy signal." },
   { label: "FISH", q: "How do you know when a <em>fish</em> is playing hooky?", a: "When it’s not in a school." },
   { label: "BAT", q: "How do you know when a vampire <em>bat</em> is sick?", a: "It can’t stop coffin." },
-
   { label: "WHALE", q: "How do you make a <em>whale</em> float?", a: "Two scoops of ice cream, root beer, and a whale." },
   { label: "SQUIRREL", q: "How do you make friends with a <em>squirrel</em>?", a: "Climb a tree and act like a nut." },
   { label: "ANT", q: "How do you milk an <em>ant</em>?", a: "First you get a really low stool." },
-  { label: "PLANTS", q: "How do you read a book about plants?", a: "You leaf through it." },
   { label: "ALLIGATOR", q: "How do you say goodbye to a sick <em>alligator</em>?", a: "“See you later, illigator.”" },
   { label: "DEER", q: "How do young <em>deer</em> call each other?", a: "They use a tell-a-fawn." },
-
   { label: "CAT", q: "How does a <em>cat</em> succeed in life?", a: "Through purr-sistence." },
   { label: "DOLPHIN", q: "How does a <em>dolphin</em> make bread?", a: "With All-Porpoise Flour." },
   { label: "DOLPHIN", q: "How does a <em>dolphin</em> wash its flippers?", a: "With an all-porpoise cleaner." },
@@ -99,54 +91,53 @@ const JOKES = [
   { label: "SKUNK", q: "How does a <em>skunk</em> put out a fire?", a: "It uses an ex-stink-guisher." },
   { label: "SLUG", q: "How does a <em>slug</em> go fishing?", a: "On a snail boat." },
   { label: "SPONGE", q: "How does a <em>sponge</em> spend its free time?", a: "It soaks up some fun." },
-  { label: "TREE", q: "How does a <em>tree</em> get into the Internet?", a: "It logs on." },
   { label: "TURTLE", q: "How does a <em>turtle</em> call its friends?", a: "With a shell phone." },
   { label: "TURTLE", q: "How does a <em>turtle</em> get to the top floor?", a: "In a shell-evator." },
   { label: "OCTOPUS", q: "How does an <em>octopus</em> pay its bills?", a: "With sand dollars." },
-
   { label: "PENGUIN", q: "How is a wall light switch like a <em>penguin</em>?", a: "They both have flippers." },
   { label: "TOUCAN", q: "How many birds can sing a duet?", a: "Toucan." },
   { label: "COCKROACH", q: "How many <em>cockroaches</em> does it take to screw in a light bulb?", a: "Can’t tell. They scatter as soon as the light turns on." },
   { label: "FROG", q: "How many <em>frogs</em> would fit in your glass of water?", a: "Toadily too many." },
   { label: "OWL", q: "How many mice can an <em>owl</em> eat?", a: "OWL of them!" },
-
   { label: "DOG", q: "How many parents does a <em>dog</em> have?", a: "Five: one ma and four paws." },
   { label: "CRAB", q: "How much seafood does a <em>crab</em> eat?", a: "Just a pinch." },
-
   { label: "RABBIT", q: "In an emergency whom do you call for a sick <em>rabbit</em>?", a: "A hare-a-medic." },
-  { label: "CHICKEN", q: "Is <em>chicken<em> soup good for you?", a: "Not if you’re the chicken!" },
-  { label: "TURKEY", q: "Is turkey soup good for you?", a: "Not if you’re the turkey!" },
-
+  { label: "CHICKEN", q: "Is <em>chicken</em> soup good for you?", a: "Not if you’re the chicken!" },
+  { label: "TURKEY", q: "Is <em>turkey</em> soup good for you?", a: "Not if you’re the turkey!" },
   { label: "SALMON", q: "What part of a <em>salmon</em> weighs the most?", a: "Its scales." },
   { label: "COW", q: "What’s brown and white and dangerous?", a: "A cow on a skateboard." },
-  { label: "COW", q: "What do you call a sleeping male <em>cow?<em>", a: "A Bulldozer." },
-  { label: "CAT", q: "What ancient <em>cat<em> solved mysteries?", a: "The saber SLEUTH tiger." },
+  { label: "COW", q: "What do you call a sleeping male <em>cow?</em>", a: "A Bulldozer." },
+  { label: "CAT", q: "What ancient <em>cat</em> solved mysteries?", a: "The saber SLEUTH tiger." },
   { label: "ARMADILLO", q: "What animal can you find in the military?", a: "An army-dillo." },
   { label: "BEAR", q: "What animal hibernates while standing on its head?", a: "Yoga bear." },
   { label: "BAT", q: "What animal sewed the first American flag?", a: "Bat-sy Ross." },
   { label: "AARDVARK", q: "What’s an <em>aardvark</em>’s favorite pizza topping?", a: "Ant-chovies." },
-  { label: "PARROT", q: "What’s smarter than a talking <em>parrot?<em>", a: "A spelling bee." },
+  { label: "PARROT", q: "What’s smarter than a talking <em>parrot?</em>", a: "A spelling bee." },
   { label: "LEMUR", q: "What does a <em>lemur</em> pirate say?", a: "“Aye-aye, matey!”" },
   { label: "JELLYFISH", q: "What makes a <em>jellyfish</em> laugh?", a: "Ten tickles." },
-
-  { label: "CHICKEN", q: "What do you get when you cross a <em>chicken<em> with a <em>skunk?<em>", a: "A fowl smell." },
-  { label: "FLY", q: "What are <em>flies<em> most afraid of?", a: "The SWAT team." },
-  { label: "SKUNK", q: "What are <em>skunks<em> so smart?", a: "They make a lot of scents." },
-  { label: "SPIDER", q: "What are <em>spiders<em> called after their wedding?", a: "Newly webs." },
+  { label: "CHICKEN", q: "What do you get when you cross a <em>chicken</em> with a <em>skunk?</em>", a: "A fowl smell." },
+  { label: "FLY", q: "What are <em>flies</em> most afraid of?", a: "The SWAT team." },
+  { label: "SKUNK", q: "What are <em>skunks</em> so smart?", a: "They make a lot of scents." },
+  { label: "SPIDER", q: "What are <em>spiders</em> called after their wedding?", a: "Newly webs." },
   { label: "Ôœˆø∆¡@•∫ç", q: "What barks, chases cats, and has black and red spots?", a: "A Dalmatian with measles." },
-  { label: "BEAR", q: "What bear likes to go out in the rain?", a: "Drizzly bears." },
-  { label: "BIRD", q: "What <em>bird<em> is the greatest artist?", a: "Leonardo da Finchy." },
-  { label: "BIRD", q: "What <em>bird<em> shows up at every meal?", a: "A swallow." },
-  { label: "ˆ?¡•£¡&", q: "What <em>birds<em> always get out of breath when migrating?", a: "Puffins." },
-  { label: "£¡÷∫˚œ%", q: "What <em>bug<em> caused the computer to crash?", a: "The Inter-gnat." },
-  { label: "≤ß∂å˚", q: "What <em>buzzes,<em> is black and yellow, and goes along the sides of flowers?", a: "Bee-line." },
+  { label: "BEAR", q: "What <em>bear</em> likes to go out in the rain?", a: "Drizzly bears." },
+  { label: "BIRD", q: "What <em>bird</em> is the greatest artist?", a: "Leonardo da Finchy." },
+  { label: "BIRD", q: "What <em>bird</em> shows up at every meal?", a: "A swallow." },
+  { label: "ˆ?¡•£¡&", q: "What <em>birds</em> always get out of breath when migrating?", a: "Puffins." },
+  { label: "BUG", q: "What <em>bug</em> caused the computer to crash?", a: "The Inter-gnat." },
+  { label: "≤ß∂å˚", q: "What <em>buzzes,</em> is black and yellow, and goes along the sides of flowers?", a: "Bee-line." },
 ];
-
 
 const IMAGES = [
   { label: "PENGUIN", src: "imgs/penguin.gif" },
+  { label: "BEAR", src: "imgs/bear.gif" },
+  { label: "GOAT", src: "imgs/goat.gif" },
   { label: "GIRAFFE", src: "imgs/giraffe.gif" },
   { label: "CAR", src: "imgs/cat1.gif" },
+  { label: "CAT", src: "imgs/cat2.gif" },
+  { label: "MONKEY", src: "imgs/monkey1.jpg" },
+  { label: "MONKEY", src: "imgs/monkey2.gif" },
+  { label: "MONKEY", src: "imgs/monkey3.gif" },
   { label: "FROG", src: "imgs/frog1.gif" },
   { label: "FROG", src: "imgs/frog2.gif" },
   { label: "QUOKA", src: "imgs/quoka.gif" },
@@ -586,7 +577,7 @@ function wireWindow(el) {
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       el.remove();
-      const count = randInt(1, 2);
+      const count = randInt(1, 3);
       for (let i = 0; i < count; i++) spawnRandomWindow();
     });
   }
