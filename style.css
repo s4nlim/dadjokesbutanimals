@@ -1,7 +1,8 @@
 /* --- base --- */
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { font-family: system-ui, -apple-system, Arial, sans-serif; }
+body { font-family: "Inter", sans-serif; }
+
 
 /* --- desktop --- */
 .desktop{
@@ -11,7 +12,7 @@ body { font-family: system-ui, -apple-system, Arial, sans-serif; }
   overflow: hidden;
 
   /* Replace with your own image path */
-  background: url("bg.jpg") center / cover no-repeat;
+  background: url("imgs/bg.jpg") center / cover no-repeat;
 }
 
 /* --- window --- */
@@ -23,6 +24,9 @@ body { font-family: system-ui, -apple-system, Arial, sans-serif; }
   border: 1px solid #cfcfcf;
   box-shadow: 0 8px 20px rgba(0,0,0,.18);
   z-index: 1;
+
+  /* ✅ stop content from spilling out of the window */
+  overflow: hidden;
 }
 
 /* title bar */
@@ -54,7 +58,7 @@ body { font-family: system-ui, -apple-system, Arial, sans-serif; }
   border: 0;
   background: transparent;
   color: #fff;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
   line-height: 1;
 }
@@ -65,46 +69,60 @@ body { font-family: system-ui, -apple-system, Arial, sans-serif; }
 /* content area */
 .win .content{
   padding: 14px 14px 18px;
+  height: calc(100% - 26px);
+  overflow: hidden; /* ✅ 스크롤 없애기 */
 }
+
+/* content area */
 .win .q{
   margin: 0;
-  font-weight: 900;
-  font-size: 36px;
+  font-weight: 600;
+  font-size: var(--qSize, 36px);   /* ✅ JS가 여기 꽂아줌 */
   line-height: 1.08;
   color: #111;
+
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
-.win .q em{
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-weight: 700;
-}
+
 .win .answer{
   margin-top: 12px;
   font-weight: 900;
-  font-size: 58px;
+  font-size: var(--aSize, 58px);  /* ✅ JS가 여기 꽂아줌 */
   line-height: 1;
   display: none;
+
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
+
+.win .q em{
+  font-family: "Ibarra Real Nova", serif;
+  font-style: italic;
+  font-weight: 800;
+  font-size: 58px;
+}
+
 .win.revealed .answer{ display: block; }
 
 /* image windows */
 .win img{
-  width: 100%;
-  height: auto;
-  display: block;
+  display:block;
+  width:100%;
+  height:auto;
 }
+
 
 /* maximize */
 .win.max{
-  width: min(900px, 92vw);
-  height: min(520px, 82vh);
+  width: min(1300px, 96vw);
+  height: min(760px, 90vh);
 }
-.win.max .content{
-  height: calc(100% - 26px);
-  overflow: auto;
+
+/* overlap layer (if you're using .over class) */
+.win.over{
+  z-index: 90;
 }
-.win.max .q{ font-size: 54px; }
-.win.max .answer{ font-size: 90px; }
 
 /* a little hint for debugging */
 .win.debug-outline{

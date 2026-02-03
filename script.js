@@ -1,11 +1,12 @@
 const desktop = document.getElementById("desktop");
-const maxModeBtn = document.getElementById("maxModeBtn");
 
-let topZ = 10;
-let maximizeMode = false; // optional: click a window to force-max when ON
+let maximizeMode = false;
 
-// how "high" a maximized window should be (NOT the top)
-const MAX_Z = 50;
+// z-index rules
+const OVERLAP_COUNT = 5;
+const Z_MAXIMIZED = 80;
+const Z_NORMAL = 60;
+const Z_OVER = 90;
 
 // ---- data ----
 const JOKES = [
@@ -113,42 +114,42 @@ const JOKES = [
   { label: "CRAB", q: "How much seafood does a <em>crab</em> eat?", a: "Just a pinch." },
 
   { label: "RABBIT", q: "In an emergency whom do you call for a sick <em>rabbit</em>?", a: "A hare-a-medic." },
-  { label: "CHICKEN", q: "Is chicken soup good for you?", a: "Not if you’re the chicken!" },
+  { label: "CHICKEN", q: "Is <em>chicken<em> soup good for you?", a: "Not if you’re the chicken!" },
   { label: "TURKEY", q: "Is turkey soup good for you?", a: "Not if you’re the turkey!" },
 
   { label: "SALMON", q: "What part of a <em>salmon</em> weighs the most?", a: "Its scales." },
   { label: "COW", q: "What’s brown and white and dangerous?", a: "A cow on a skateboard." },
-  { label: "COW", q: "What do you call a sleeping male cow?", a: "A Bulldozer." },
-  { label: "CAT", q: "What ancient cat solved mysteries?", a: "The saber SLEUTH tiger." },
+  { label: "COW", q: "What do you call a sleeping male <em>cow?<em>", a: "A Bulldozer." },
+  { label: "CAT", q: "What ancient <em>cat<em> solved mysteries?", a: "The saber SLEUTH tiger." },
   { label: "ARMADILLO", q: "What animal can you find in the military?", a: "An army-dillo." },
   { label: "BEAR", q: "What animal hibernates while standing on its head?", a: "Yoga bear." },
   { label: "BAT", q: "What animal sewed the first American flag?", a: "Bat-sy Ross." },
   { label: "AARDVARK", q: "What’s an <em>aardvark</em>’s favorite pizza topping?", a: "Ant-chovies." },
-  { label: "BEE", q: "What’s smarter than a talking parrot?", a: "A spelling bee." },
+  { label: "PARROT", q: "What’s smarter than a talking <em>parrot?<em>", a: "A spelling bee." },
   { label: "LEMUR", q: "What does a <em>lemur</em> pirate say?", a: "“Aye-aye, matey!”" },
   { label: "JELLYFISH", q: "What makes a <em>jellyfish</em> laugh?", a: "Ten tickles." },
 
-  { label: "CHICKEN", q: "What do you get when you cross a chicken with a skunk?", a: "A fowl smell." },
-  { label: "FLY", q: "What are flies most afraid of?", a: "The SWAT team." },
-  { label: "SKUNK", q: "What are skunks so smart?", a: "They make a lot of scents." },
-  { label: "SPIDER", q: "What are spiders called after their wedding?", a: "Newly webs." },
-  { label: "DALMATIAN", q: "What barks, chases cats, and has black and red spots?", a: "A Dalmatian with measles." },
+  { label: "CHICKEN", q: "What do you get when you cross a <em>chicken<em> with a <em>skunk?<em>", a: "A fowl smell." },
+  { label: "FLY", q: "What are <em>flies<em> most afraid of?", a: "The SWAT team." },
+  { label: "SKUNK", q: "What are <em>skunks<em> so smart?", a: "They make a lot of scents." },
+  { label: "SPIDER", q: "What are <em>spiders<em> called after their wedding?", a: "Newly webs." },
+  { label: "Ôœˆø∆¡@•∫ç", q: "What barks, chases cats, and has black and red spots?", a: "A Dalmatian with measles." },
   { label: "BEAR", q: "What bear likes to go out in the rain?", a: "Drizzly bears." },
-  { label: "BIRD", q: "What bird is the greatest artist?", a: "Leonardo da Finchy." },
-  { label: "BIRD", q: "What bird shows up at every meal?", a: "A swallow." },
-  { label: "PUFFIN", q: "What birds always get out of breath when migrating?", a: "Puffins." },
-  { label: "GNAT", q: "What bug caused the computer to crash?", a: "The Inter-gnat." },
-  { label: "BEE", q: "What buzzes, is black and yellow, and goes along the sides of flowers?", a: "Bee-line." },
+  { label: "BIRD", q: "What <em>bird<em> is the greatest artist?", a: "Leonardo da Finchy." },
+  { label: "BIRD", q: "What <em>bird<em> shows up at every meal?", a: "A swallow." },
+  { label: "ˆ?¡•£¡&", q: "What <em>birds<em> always get out of breath when migrating?", a: "Puffins." },
+  { label: "£¡÷∫˚œ%", q: "What <em>bug<em> caused the computer to crash?", a: "The Inter-gnat." },
+  { label: "≤ß∂å˚", q: "What <em>buzzes,<em> is black and yellow, and goes along the sides of flowers?", a: "Bee-line." },
 ];
 
 
 const IMAGES = [
   { label: "PENGUIN", src: "https://images.unsplash.com/photo-1455156218388-5e61b526818b?auto=format&fit=crop&w=900&q=60" },
-  { label: "SNAIL", src: "https://images.unsplash.com/photo-1494253109108-2e30c049369b?auto=format&fit=crop&w=900&q=60" },
-  { label: "DESKTOP", src: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=60" },
+  { label: "SNAIL", src: "imgs/snail.jpg" },
+  { label: "DOG", src: "imgs/dog1.jpg" },
 ];
 
-// ---- helpers ----
+// -------------------- helpers --------------------
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -159,13 +160,318 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 function randomPos(w = 360, h = 220) {
-  const pad = 20;
-  const x = randInt(pad, Math.max(pad, window.innerWidth - w - pad));
-  const y = randInt(pad, Math.max(pad, window.innerHeight - h - pad));
+  const OUT = 50; // ✅ 화면 밖으로 튀어나가도 되는 범위(픽셀)
+  const x = randInt(-OUT, window.innerWidth - w + OUT);
+  const y = randInt(-OUT, window.innerHeight - h + OUT);
   return { x, y };
 }
 
-// ---- window creation ----
+function fitImageWindow(win) {
+  const img = win.querySelector("img");
+  if (!img || !img.naturalWidth || !img.naturalHeight) return;
+
+  const { MIN_W, MIN_H } = getProfile();
+
+  // 모바일/데스크탑 폭 범위(원하는 대로 조절 가능)
+  const maxW = window.innerWidth <= 480 ? 260 : 420;
+  const minW = window.innerWidth <= 480 ? 170 : 260;
+
+  // 이미지 비율
+  const ratio = img.naturalWidth / img.naturalHeight;
+
+  // 폭 랜덤으로 뽑고, 높이는 비율로 계산
+  let w = randInt(minW, maxW);
+  let h = Math.round(w / ratio);
+
+  // 화면 cap 적용
+  w = clamp(w, MIN_W, CAP_W());
+  h = clamp(h, MIN_H, CAP_H());
+
+  // 혹시 세로로 너무 길면 높이를 먼저 제한하고 폭을 다시 계산
+  if (h >= CAP_H()) {
+    h = CAP_H();
+    w = Math.round(h * ratio);
+    w = clamp(w, MIN_W, CAP_W());
+  }
+
+  win.style.width = w + "px";
+  win.style.height = h + "px";
+}
+
+// ✅ maximize 전에 원래 크기/위치 저장
+function saveBox(el) {
+  el.dataset.prevW = el.style.width || "";
+  el.dataset.prevH = el.style.height || "";
+  el.dataset.prevL = el.style.left || "";
+  el.dataset.prevT = el.style.top || "";
+}
+
+// ✅ restore 때 원래 크기/위치 복구
+function restoreBox(el) {
+  el.style.width  = el.dataset.prevW || "";
+  el.style.height = el.dataset.prevH || "";
+  if (el.dataset.prevL !== "") el.style.left = el.dataset.prevL;
+  if (el.dataset.prevT !== "") el.style.top  = el.dataset.prevT;
+}
+
+function clearOverlaps() {
+  document.querySelectorAll(".win.over").forEach(w => w.classList.remove("over"));
+}
+
+function pickOverlaps(exceptEl, count) {
+  const wins = [...document.querySelectorAll(".win")]
+    .filter(w => w !== exceptEl && !w.classList.contains("max"));
+
+  for (let i = wins.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [wins[i], wins[j]] = [wins[j], wins[i]];
+  }
+
+  wins.slice(0, count).forEach(w => w.classList.add("over"));
+}
+
+function updateMaxBtn(el) {
+  const btn = el.querySelector(".btn-max");
+  if (!btn) return;
+  const isMax = el.classList.contains("max");
+  btn.textContent = isMax ? "−" : "+";
+  btn.title = isMax ? "restore" : "maximize";
+}
+
+function applyZRules(el) {
+  if (el.classList.contains("over")) {
+    el.style.zIndex = Z_OVER;
+    return;
+  }
+  if (el.classList.contains("max")) {
+    el.style.zIndex = Z_MAXIMIZED;
+    return;
+  }
+  el.style.zIndex = Z_NORMAL;
+}
+
+// -------------------- sizing: content box + fit --------------------
+function syncContentBox(win) {
+  const bar = win.querySelector(".bar");
+  const content = win.querySelector(".content");
+  if (!bar || !content) return;
+
+  // win padding/border 고려는 CSS에서 처리한다고 가정하고,
+  // "bar 제외한 나머지 높이"를 content에 준다.
+  const h = Math.max(0, win.clientHeight - bar.offsetHeight);
+  content.style.height = h + "px";
+  content.style.overflow = "hidden";
+}
+
+// ✅ 작은 창: 랜덤 폰트 먼저 → 창이 텍스트에 딱 맞게
+function getProfile() {
+  const w = window.innerWidth;
+
+  // 모바일
+  if (w <= 480) return { Q_RANGE: [10, 20], A_MULT: 1.05, MIN_W: 150, MIN_H: 105 };
+
+  // 데스크탑
+  return { Q_RANGE: [25, 55], A_MULT: 1.25, MIN_W: 240, MIN_H: 160 };
+}
+
+const CAP_W = () => Math.min(720, Math.floor(window.innerWidth * 0.92));
+const CAP_H = () => Math.min(820, Math.floor(window.innerHeight * 0.92));
+
+
+
+function pickTextSizes(win) {
+  if (win.dataset.qSize) return;
+
+  const { Q_RANGE, A_MULT } = getProfile();   // ✅ 추가
+  const q = randInt(Q_RANGE[0], Q_RANGE[1]);  // ✅ 수정
+  const a = Math.round(q * A_MULT);           // ✅ 수정
+
+  win.dataset.qSize = q;
+  win.dataset.aSize = a;
+}
+function applyTextSizes(win) {
+  const qEl = win.querySelector(".q");
+  const aEl = win.querySelector(".answer");
+  if (!qEl) return;
+
+  const { A_MULT } = getProfile(); // ✅ 추가
+
+  const qSize = parseInt(win.dataset.qSize || "54", 10);
+  const aSize = parseInt(
+    win.dataset.aSize || String(Math.round(qSize * A_MULT)),
+    10
+  );
+
+  qEl.style.setProperty("font-size", qSize + "px", "important");
+  qEl.style.setProperty("line-height", "1.02", "important");
+  qEl.style.setProperty("margin", "0", "important");
+  qEl.style.setProperty("overflow-wrap", "anywhere", "important");
+  qEl.style.setProperty("word-break", "break-word", "important");
+
+  if (aEl) {
+    aEl.style.setProperty("font-size", aSize + "px", "important");
+    aEl.style.setProperty("line-height", "0.98", "important");
+    aEl.style.setProperty("margin", "0", "important");
+    aEl.style.setProperty("overflow-wrap", "anywhere", "important");
+    aEl.style.setProperty("word-break", "break-word", "important");
+  }
+}
+
+// 내용이 얼마나 필요한지 측정해서 win 높이를 정확히 맞춘다 (bar 높이 하드코딩 X)
+function measureNeed(win) {
+  const bar = win.querySelector(".bar");
+  const content = win.querySelector(".content");
+  if (!bar || !content) return { needH: win.offsetHeight };
+
+  const cs = getComputedStyle(win);
+  const borderY = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+
+  // 자연 높이로 측정
+  const prevWinH = win.style.height;
+  const prevContentH = content.style.height;
+  const prevOv = content.style.overflow;
+
+  win.style.height = "auto";
+  content.style.height = "auto";
+  content.style.overflow = "visible";
+  void content.offsetHeight;
+
+  const needH = bar.offsetHeight + borderY + content.scrollHeight;
+
+  // 복구
+  content.style.overflow = prevOv || "hidden";
+  content.style.height = prevContentH || "";
+  win.style.height = prevWinH || "";
+
+  return { needH };
+}
+
+function fitSmallWindow(win) {
+  const { MIN_W, MIN_H } = getProfile();
+  const bump = window.innerWidth <= 480 ? 28 : 60;
+
+  if (win.dataset.type !== "joke") return;
+  if (win.classList.contains("max")) return;
+
+  pickTextSizes(win);
+  applyTextSizes(win);
+
+  // 시작 폭(랜덤) 유지
+  win.style.width = clamp(win.offsetWidth || 320, MIN_W, CAP_W()) + "px";
+
+  // 높이가 cap 넘으면 폭 키워서 줄바꿈 줄이기
+  let w = win.offsetWidth;
+  let guard = 18;
+
+  while (guard-- > 0) {
+    const { needH } = measureNeed(win);
+
+    if (needH <= CAP_H() || w >= CAP_W()) {
+      win.style.height = clamp(needH, MIN_H, CAP_H()) + "px";
+      break;
+    }
+    w = Math.min(CAP_W(), w + bump);
+    win.style.width = w + "px";
+  }
+
+  syncContentBox(win);
+
+  // cap 걸려도 아직 넘치면 -> 폰트 살짝 줄이기(최후)
+  const content = win.querySelector(".content");
+  const qEl = win.querySelector(".q");
+  const aEl = win.querySelector(".answer");
+  if (!content || !qEl) return;
+
+  let qSize = parseInt(win.dataset.qSize, 10);
+  let aSize = parseInt(win.dataset.aSize, 10);
+
+  guard = 140;
+  while (guard-- > 0) {
+    const overY = content.scrollHeight > content.clientHeight + 1;
+    const overX = content.scrollWidth > content.clientWidth + 1;
+    if (!overY && !overX) break;
+
+    qSize -= 1;
+    aSize -= 1;
+    if (qSize < 14) break;
+
+    win.dataset.qSize = qSize;
+    win.dataset.aSize = Math.max(20, aSize);
+    applyTextSizes(win);
+
+    const { needH } = measureNeed(win);
+    win.style.height = clamp(needH, MIN_H, CAP_H()) + "px";
+    syncContentBox(win);
+  }
+}
+
+// ✅ max 창: 화면에 큰 창 + 폰트만 줄여서 "무조건 들어가게"
+function fitTextMax(win) {
+  const q = win.querySelector(".q");
+  const a = win.querySelector(".answer");
+  const content = win.querySelector(".content");
+  if (!q || !content) return;
+
+  syncContentBox(win);
+
+  const cw = content.clientWidth;
+  const ch = content.clientHeight;
+
+  let qSize = 60;
+  let aSize = 110;
+
+  const wantsAnswer = win.classList.contains("revealed") && a;
+
+  function apply() {
+  win.style.setProperty("--qSize", qSize + "px");
+  win.style.setProperty("--aSize", aSize + "px");
+
+  q.style.setProperty("font-size", qSize + "px", "important");
+  q.style.setProperty("line-height", "1.02", "important");
+  q.style.setProperty("margin", "0", "important");
+
+  // ✅ 단어/중간 글자에서 break 금지
+  q.style.setProperty("white-space", "normal", "important");      // 줄바꿈은 "스페이스"에서만
+  q.style.setProperty("word-break", "normal", "important");       // 중간 자르기 금지
+  q.style.setProperty("overflow-wrap", "normal", "important");    // anywhere 금지
+  q.style.setProperty("hyphens", "none", "important");            // 하이픈 자동 분리 금지
+
+  if (a) {
+    a.style.setProperty("font-size", aSize + "px", "important");
+    a.style.setProperty("line-height", "0.98", "important");
+    a.style.setProperty("margin", "0", "important");
+
+    a.style.setProperty("white-space", "normal", "important");
+    a.style.setProperty("word-break", "normal", "important");
+    a.style.setProperty("overflow-wrap", "normal", "important");
+    a.style.setProperty("hyphens", "none", "important");
+  }
+}
+
+
+  apply();
+
+  let guard = 160;
+  while (guard-- > 0) {
+    const qFits = q.scrollHeight <= ch;
+    const xFits = (q.scrollWidth <= cw) && (!wantsAnswer || a.scrollWidth <= cw);
+
+    let aFits = true;
+    if (wantsAnswer) aFits = (q.scrollHeight + 12 + a.scrollHeight) <= ch;
+
+    if (qFits && aFits && xFits) break;
+
+    qSize -= 1;
+    if (wantsAnswer) aSize -= 1;
+
+    if (qSize < 14) break;
+    if (wantsAnswer && aSize < 20) aSize = 20;
+
+    apply();
+  }
+}
+
+// -------------------- window creation --------------------
 function createJokeWindow() {
   const data = pick(JOKES);
   const el = document.createElement("section");
@@ -187,6 +493,7 @@ function createJokeWindow() {
   `;
 
   wireWindow(el);
+  updateMaxBtn(el);
   return el;
 }
 
@@ -208,6 +515,7 @@ function createImageWindow() {
   `;
 
   wireWindow(el);
+  updateMaxBtn(el);
   return el;
 }
 
@@ -215,50 +523,73 @@ function spawnRandomWindow() {
   const makeImg = Math.random() < 0.25;
   const el = makeImg ? createImageWindow() : createJokeWindow();
 
-  const { x, y } = randomPos(360, 220);
+  // 먼저 붙이고(실측 가능), invis로 깜빡임 방지
+  el.style.visibility = "hidden";
+  desktop.appendChild(el);
+
+  if (el.dataset.type === "img") {
+    const img = el.querySelector("img");
+
+    // 이미지 로드된 뒤에 비율대로 탭 크기 세팅
+    const doFit = () => {
+      fitImageWindow(el);
+    };
+
+    if (img.complete) doFit();
+    else img.addEventListener("load", doFit, { once: true });
+
+  } else {
+    // 텍스트 탭: 폭만 랜덤, 높이는 내용에 맞춤
+    el.style.width = (window.innerWidth <= 480 ? randInt(170, 260) : randInt(260, 420)) + "px";
+    el.style.height = "auto";
+    fitSmallWindow(el);
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => fitSmallWindow(el));
+    }
+  }
+
+
+  const { x, y } = randomPos(el.offsetWidth, el.offsetHeight);
   el.style.left = x + "px";
   el.style.top = y + "px";
+  el.style.visibility = "visible";
 
-  // normal windows: keep growing, always above MAX_Z
-  el.style.zIndex = ++topZ;
+  applyZRules(el);
+  updateMaxBtn(el);
 
-  desktop.appendChild(el);
+  // 리사이즈 관찰: 작은 창은 fitSmallWindow로만
+  watchFit(el);
+
+  return el;
 }
 
-// ---- behavior wiring ----
+// -------------------- behavior wiring --------------------
 function wireWindow(el) {
-  // bring normal windows to top when interacting
-  el.addEventListener("mousedown", () => {
-    // if this is maximized, keep it under the top layer
-    if (el.classList.contains("max")) {
-      el.style.zIndex = MAX_Z;
-      return;
-    }
-    el.style.zIndex = ++topZ;
-  });
+  el.addEventListener("mousedown", () => applyZRules(el));
 
-  // maximize button
-  el.querySelector(".btn-max").addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleMax(el);
-  });
+  const maxBtn = el.querySelector(".btn-max");
+  if (maxBtn) {
+    maxBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleMax(el);
+    });
+  }
 
-  // close button: remove + spawn 1-2 new
-  el.querySelector(".btn-close").addEventListener("click", (e) => {
-    e.stopPropagation();
-    el.remove();
-    const count = randInt(1, 2);
-    for (let i = 0; i < count; i++) spawnRandomWindow();
-  });
+  const closeBtn = el.querySelector(".btn-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      el.remove();
+      const count = randInt(1, 2);
+      for (let i = 0; i < count; i++) spawnRandomWindow();
+    });
+  }
 
-  // drag by title bar (only when NOT maximized)
   const bar = el.querySelector(".bar");
-  bar.addEventListener("mousedown", (e) => startDrag(e, el));
+  if (bar) bar.addEventListener("mousedown", (e) => startDrag(e, el));
 
-  // double click anywhere on window to toggle max
   el.addEventListener("dblclick", () => toggleMax(el));
-
-  // optional maximize-mode: single click forces one max at a time
   el.addEventListener("click", () => {
     if (!maximizeMode) return;
     toggleMax(el, true);
@@ -268,30 +599,46 @@ function wireWindow(el) {
 function toggleMax(el, forceOn = false) {
   const isMax = el.classList.contains("max");
 
-  // forceOn means: make this the only maximized window
   if (forceOn) {
     document.querySelectorAll(".win.max").forEach(w => {
-      w.classList.remove("max");
-      w.classList.remove("revealed"); // hide answer when not max
+      w.classList.remove("max", "revealed");
+      w.dataset.free = "0";
+      restoreBox(w);
+      updateMaxBtn(w);
+      if (w.dataset.type === "joke") fitSmallWindow(w);
     });
-    el.classList.add("max");
-    el.classList.add("revealed"); // show answer when max
-    centerWindow(el);
-    el.style.zIndex = MAX_Z; // keep under some tabs
-    return;
   }
 
-  // normal toggle
   if (isMax) {
-    el.classList.remove("max");
-    el.classList.remove("revealed"); // hide answer when leaving max
-    el.style.zIndex = ++topZ;
+    // RESTORE
+    el.classList.remove("max", "revealed");
+    restoreBox(el);
+    el.dataset.free = "0";
+
+    requestAnimationFrame(() => {
+      if (el.dataset.type === "joke") fitSmallWindow(el);
+    });
   } else {
-    el.classList.add("max");
-    el.classList.add("revealed"); // show answer when entering max
-    centerWindow(el);
-    el.style.zIndex = MAX_Z; // keep under some tabs
+    // MAXIMIZE
+    saveBox(el);
+    el.classList.add("max", "revealed");
+    el.dataset.free = "0";
+
+    // inline width/height 제거해서 CSS .win.max가 먹게
+    el.style.width = "";
+    el.style.height = "";
+
+    requestAnimationFrame(() => {
+      if (el.dataset.free !== "1") centerWindow(el);
+      fitTextMax(el);
+    });
   }
+
+  clearOverlaps();
+  if (el.classList.contains("max")) pickOverlaps(el, OVERLAP_COUNT);
+
+  document.querySelectorAll(".win").forEach(applyZRules);
+  updateMaxBtn(el);
 }
 
 function centerWindow(el) {
@@ -305,21 +652,16 @@ function centerWindow(el) {
   el.style.top  = clamp(y, 10, window.innerHeight - h - 10) + "px";
 }
 
-// ---- dragging ----
+// -------------------- dragging --------------------
 let drag = null;
 
 function startDrag(e, el) {
-  if (e.button !== 0) return; // left click only
-  if (el.classList.contains("max")) return; // don't drag when maximized
-
-  el.style.zIndex = ++topZ;
+  if (e.button !== 0) return;
 
   const rect = el.getBoundingClientRect();
-  drag = {
-    el,
-    offsetX: e.clientX - rect.left,
-    offsetY: e.clientY - rect.top
-  };
+  drag = { el, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+
+  el.dataset.free = "1";
 
   window.addEventListener("mousemove", onDragMove);
   window.addEventListener("mouseup", endDrag);
@@ -332,8 +674,9 @@ function onDragMove(e) {
   const x = e.clientX - drag.offsetX;
   const y = e.clientY - drag.offsetY;
 
-  el.style.left = clamp(x, 0, window.innerWidth - el.offsetWidth) + "px";
-  el.style.top  = clamp(y, 0, window.innerHeight - el.offsetHeight) + "px";
+  const OUT = 300;
+  el.style.left = clamp(x, -OUT, window.innerWidth + OUT - el.offsetWidth) + "px";
+  el.style.top  = clamp(y, -OUT, window.innerHeight + OUT - el.offsetHeight) + "px";
 }
 
 function endDrag() {
@@ -342,12 +685,44 @@ function endDrag() {
   window.removeEventListener("mouseup", endDrag);
 }
 
+// -------------------- resize observe --------------------
+function watchFit(win) {
+  const ro = new ResizeObserver(() => {
+    if (win._fitting) return;
+    win._fitting = true;
 
-// ---- init ----
+    if (win.classList.contains("max")) {
+      fitTextMax(win);
+    } else if (win.dataset.type === "joke") {
+      fitSmallWindow(win);
+    }
+
+    win._fitting = false;
+  });
+
+  ro.observe(win);
+  const content = win.querySelector(".content");
+  if (content) ro.observe(content);
+  win._ro = ro;
+}
+
+// -------------------- init --------------------
 const base = Math.floor((window.innerWidth * window.innerHeight) / 60000);
 for (let i = 0; i < base; i++) spawnRandomWindow();
 
-// keep maximized windows centered on resize
 window.addEventListener("resize", () => {
-  document.querySelectorAll(".win.max").forEach(centerWindow);
+  document.querySelectorAll(".win.max").forEach(w => {
+    if (w.dataset.free !== "1") centerWindow(w);
+    fitTextMax(w);
+  });
+
+  document.querySelectorAll(".win:not(.max)").forEach(w => {
+  if (w.dataset.type !== "joke") return;
+
+  // ✅ 화면 크기 바뀌면(특히 모바일) 폰트 사이즈 다시 뽑기
+  delete w.dataset.qSize;
+  delete w.dataset.aSize;
+
+  fitSmallWindow(w);
+});
 });
