@@ -144,7 +144,12 @@ const JOKES = [
 
 
 const IMAGES = [
-  { label: "PENGUIN", src: "https://images.unsplash.com/photo-1455156218388-5e61b526818b?auto=format&fit=crop&w=900&q=60" },
+  { label: "PENGUIN", src: "imgs/penguin.gif" },
+  { label: "GIRAFFE", src: "imgs/giraffe.gif" },
+  { label: "CAR", src: "imgs/cat1.gif" },
+  { label: "FROG", src: "imgs/frog1.gif" },
+  { label: "FROG", src: "imgs/frog2.gif" },
+  { label: "QUOKA", src: "imgs/quoka.gif" },
   { label: "SNAIL", src: "imgs/snail.jpg" },
   { label: "DOG", src: "imgs/dog1.jpg" },
 ];
