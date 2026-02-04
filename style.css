@@ -37,7 +37,7 @@ body { font-family: "Inter", sans-serif; }
   justify-content: space-between;
   padding: 0 6px 0 8px;
   user-select: none;
-  cursor: grab;
+  cursor: url("imgs/grab.png") 0 0, auto;;
 }
 .win .label{
   font-size: 12px;
@@ -57,7 +57,7 @@ body { font-family: "Inter", sans-serif; }
   background: transparent;
   color: #fff;
   font-weight: 700;
-  cursor: pointer;
+  cursor: url("imgs/clicker.png") 0 0, auto;;
   line-height: 1;
 }
 .win .controls button:hover{
