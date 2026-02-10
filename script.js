@@ -105,9 +105,7 @@ const JOKES = [
   { label: "CHICKEN", q: "Is <em>chicken</em> soup good for you?", a: "Not if you’re the chicken!" },
   { label: "TURKEY", q: "Is <em>turkey</em> soup good for you?", a: "Not if you’re the turkey!" },
   { label: "SALMON", q: "What part of a <em>salmon</em> weighs the most?", a: "Its scales." },
-  { label: "COW", q: "What’s brown and white and dangerous?", a: "A cow on a skateboard." },
   { label: "COW", q: "What do you call a sleeping male <em>cow?</em>", a: "A Bulldozer." },
-  { label: "CAT", q: "What ancient <em>cat</em> solved mysteries?", a: "The saber SLEUTH tiger." },
   { label: "ARMADILLO", q: "What animal can you find in the military?", a: "An army-dillo." },
   { label: "BEAR", q: "What animal hibernates while standing on its head?", a: "Yoga bear." },
   { label: "BAT", q: "What animal sewed the first American flag?", a: "Bat-sy Ross." },
@@ -146,7 +144,140 @@ const IMAGES = [
   { label: "DOG", src: "imgs/dog1.jpg" },
 ];
 
+const closeCountEl = document.getElementById("closeCount");
+const closeMeter = document.getElementById("closeMeter");
+let closeAttempts = 0;
+
+// 3초 동안 close 액션 없으면 숨김
+const SCORE_IDLE_MS = 3000;
+let scoreIdleTimer = null;
+
+function startScoreIdleTimer() {
+  clearTimeout(scoreIdleTimer);
+  scoreIdleTimer = setTimeout(() => {
+    if (closeMeter) closeMeter.classList.add("is-faded");
+  }, SCORE_IDLE_MS);
+}
+
+
+const aboutDock = document.getElementById("aboutDock");
+const aboutHandle = document.getElementById("aboutHandle");
+const aboutPanel = document.getElementById("aboutPanel");
+const aboutClose = document.getElementById("aboutClose");
+
+function setAbout(open){
+  aboutDock.classList.toggle("is-open", open);
+  aboutHandle.setAttribute("aria-expanded", String(open));
+  aboutPanel.setAttribute("aria-hidden", String(!open));
+}
+
+function toggleAbout(){
+  const isOpen = aboutDock.classList.contains("is-open");
+  setAbout(!isOpen); // 다시 누르면 닫힘
+}
+
+aboutHandle?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleAbout();
+});
+
+aboutClose?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setAbout(false);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") setAbout(false);
+});
+
+/* 열려 있을 때 바깥 클릭하면 닫고 싶으면 유지 */
+document.addEventListener("pointerdown", (e) => {
+  if (!aboutDock.classList.contains("is-open")) return;
+  if (aboutDock.contains(e.target)) return;
+  setAbout(false);
+});
+
+// ESC로 닫기
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && aboutPanel?.classList.contains("is-open")) {
+    setAboutOpen(false);
+  }
+});
+
+
+function showScoreMeter() {
+  if (closeMeter) closeMeter.classList.remove("is-faded");
+  startScoreIdleTimer();
+}
+
+function bumpCloseCount() {
+  closeAttempts += 1;
+  if (closeCountEl) closeCountEl.textContent = closeAttempts;
+  showScoreMeter(); // 닫기 시작하면 다시 보이게
+}
+
+let topOrder = 1; // 추가
+
 // -------------------- helpers --------------------
+
+const GLITCH_CHARS = "∆∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏√∫µɆɎÐÞŁØÆŒßĦ";
+
+function makeGlitchLabel(min = 6, max = 10) {
+  const len = randInt(min, max);
+  let out = "";
+  for (let i = 0; i < len; i++) {
+    out += GLITCH_CHARS[randInt(0, GLITCH_CHARS.length - 1)];
+  }
+  return out;
+}
+function randGlitchChar() {
+  return GLITCH_CHARS[randInt(0, GLITCH_CHARS.length - 1)];
+}
+
+
+function startLabelGlitch(win) {
+  const labelEl = win.querySelector(".label");
+  if (!labelEl) return;
+
+  // ✅ original 없으면 현재 텍스트를 original로 저장
+  if (!labelEl.dataset.original) {
+    labelEl.dataset.original = labelEl.textContent || "";
+  }
+
+  // 이미 실행 중이면 중복 방지
+  stopLabelGlitch(win);
+
+  const len = randInt(6, 11);
+  const chars = Array.from({ length: len }, () => randGlitchChar());
+  labelEl.textContent = chars.join("");
+
+  const timers = [];
+
+  const scheduleChar = (i) => {
+    const tick = () => {
+      if (!win.isConnected) return;
+      chars[i] = randGlitchChar();
+      labelEl.textContent = chars.join("");
+      timers[i] = setTimeout(tick, randInt(80, 900));
+    };
+    timers[i] = setTimeout(tick, randInt(30, 700));
+  };
+
+  for (let i = 0; i < chars.length; i++) {
+    scheduleChar(i);
+  }
+
+  win._labelGlitchTimers = timers;
+}
+
+
+function stopLabelGlitch(win) {
+  if (!win?._labelGlitchTimers) return;
+  win._labelGlitchTimers.forEach((id) => clearTimeout(id));
+  win._labelGlitchTimers = null;
+}
+
+
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -157,11 +288,19 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 function randomPos(w = 360, h = 220) {
-  const OUT = 50; // ✅ 화면 밖으로 튀어나가도 되는 범위(픽셀)
-  const x = randInt(-OUT, window.innerWidth - w + OUT);
-  const y = randInt(-OUT, window.innerHeight - h + OUT);
+  const OUT_X = 50;        // allow a bit left/right overflow
+  const OUT_TOP = 10;       // allow up to 5px above top
+  const OUT_BOTTOM = 50;   // allow a bit below bottom
+
+  const x = randInt(-OUT_X, window.innerWidth - w + OUT_X);
+
+  const minY = -OUT_TOP;
+  const maxY = Math.max(minY, window.innerHeight - h + OUT_BOTTOM);
+  const y = randInt(minY, maxY);
+
   return { x, y };
 }
+
 
 function fitImageWindow(win) {
   const img = win.querySelector("img");
@@ -195,20 +334,31 @@ function fitImageWindow(win) {
   win.style.height = h + "px";
 }
 
-// ✅ maximize 전에 원래 크기/위치 저장
+// ✅ maximize 전에 원래 크기/위치/포지션 저장
 function saveBox(el) {
   el.dataset.prevW = el.style.width || "";
   el.dataset.prevH = el.style.height || "";
   el.dataset.prevL = el.style.left || "";
   el.dataset.prevT = el.style.top || "";
+  el.dataset.prevPos = el.style.position || "";
 }
 
-// ✅ restore 때 원래 크기/위치 복구
+// ✅ restore 때 원래 크기/위치/포지션 복구
 function restoreBox(el) {
-  el.style.width  = el.dataset.prevW || "";
+  el.style.width = el.dataset.prevW || "";
   el.style.height = el.dataset.prevH || "";
   if (el.dataset.prevL !== "") el.style.left = el.dataset.prevL;
-  if (el.dataset.prevT !== "") el.style.top  = el.dataset.prevT;
+  if (el.dataset.prevT !== "") el.style.top = el.dataset.prevT;
+  el.style.position = el.dataset.prevPos || "";
+}
+
+// ✅ CSS에 의존 안 하고 JS로 확실히 최대화 프레임 적용
+function setMaxFrame(el) {
+  el.style.position = "fixed";
+  el.style.left = "4vw";
+  el.style.top = "6vh";
+  el.style.width = "92vw";
+  el.style.height = "88vh";
 }
 
 function clearOverlaps() {
@@ -235,17 +385,16 @@ function updateMaxBtn(el) {
   btn.title = isMax ? "restore" : "maximize";
 }
 
-function applyZRules(el) {
-  if (el.classList.contains("over")) {
-    el.style.zIndex = Z_OVER;
-    return;
-  }
-  if (el.classList.contains("max")) {
-    el.style.zIndex = Z_MAXIMIZED;
-    return;
-  }
-  el.style.zIndex = Z_NORMAL;
+function bringToFront(el) {
+  el.dataset.order = String(++topOrder);
+  applyZRules(el);
 }
+
+function applyZRules(el) {
+  const order = Number(el.dataset.order || 0);
+  el.style.zIndex = String(order); // 순서(최근 클릭/생성)가 전부
+}
+
 
 // -------------------- sizing: content box + fit --------------------
 function syncContentBox(win) {
@@ -477,7 +626,7 @@ function createJokeWindow() {
 
   el.innerHTML = `
     <div class="bar">
-      <div class="label">${data.label}</div>
+      <div class="label">${makeGlitchLabel()}</div>
       <div class="controls">
         <button class="btn-max" title="maximize">+</button>
         <button class="btn-close" title="close">×</button>
@@ -488,6 +637,10 @@ function createJokeWindow() {
       <div class="answer">${data.a}</div>
     </div>
   `;
+
+  // ✅ 원래 라벨 저장
+  const labelEl = el.querySelector(".label");
+  if (labelEl) labelEl.dataset.original = data.label;
 
   wireWindow(el);
   updateMaxBtn(el);
@@ -502,7 +655,7 @@ function createImageWindow() {
 
   el.innerHTML = `
     <div class="bar">
-      <div class="label">${data.label}</div>
+      <div class="label">${makeGlitchLabel()}</div>
       <div class="controls">
         <button class="btn-max" title="maximize">+</button>
         <button class="btn-close" title="close">×</button>
@@ -511,10 +664,15 @@ function createImageWindow() {
     <img alt="${data.label}" src="${data.src}" />
   `;
 
+  // ✅ 원래 라벨 저장
+  const labelEl = el.querySelector(".label");
+  if (labelEl) labelEl.dataset.original = data.label;
+
   wireWindow(el);
   updateMaxBtn(el);
   return el;
 }
+
 
 function spawnRandomWindow() {
   const makeImg = Math.random() < 0.25;
@@ -523,6 +681,7 @@ function spawnRandomWindow() {
   // 먼저 붙이고(실측 가능), invis로 깜빡임 방지
   el.style.visibility = "hidden";
   desktop.appendChild(el);
+  startLabelGlitch(el);
 
   if (el.dataset.type === "img") {
     const img = el.querySelector("img");
@@ -547,23 +706,25 @@ function spawnRandomWindow() {
   }
 
 
-  const { x, y } = randomPos(el.offsetWidth, el.offsetHeight);
+    const { x, y } = randomPos(el.offsetWidth, el.offsetHeight);
   el.style.left = x + "px";
   el.style.top = y + "px";
   el.style.visibility = "visible";
 
-  applyZRules(el);
+  bringToFront(el);   // ✅ 새로 생성된 탭은 항상 최상단
   updateMaxBtn(el);
 
-  // 리사이즈 관찰: 작은 창은 fitSmallWindow로만
+  // 리사이즈 관찰
   watchFit(el);
 
   return el;
+
 }
 
 // -------------------- behavior wiring --------------------
 function wireWindow(el) {
   el.addEventListener("mousedown", () => applyZRules(el));
+  el.addEventListener("mousedown", () => bringToFront(el));
 
   const maxBtn = el.querySelector(".btn-max");
   if (maxBtn) {
@@ -577,14 +738,30 @@ function wireWindow(el) {
   if (closeBtn) {
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      bumpCloseCount();
+      stopLabelGlitch(el); // ✅ 타이머 정리
       el.remove();
-      const count = randInt(1, 3);
-      for (let i = 0; i < count; i++) spawnRandomWindow();
     });
   }
 
   const bar = el.querySelector(".bar");
-  if (bar) bar.addEventListener("mousedown", (e) => startDrag(e, el));
+  const labelEl = el.querySelector(".label");
+
+  if (bar) {
+  bar.addEventListener("mousedown", (e) => startDrag(e, el));
+
+  bar.addEventListener("mouseenter", () => {
+    if (!labelEl) return;
+    stopLabelGlitch(el);
+    labelEl.textContent = labelEl.dataset.original || labelEl.textContent;
+  });
+
+  bar.addEventListener("mouseleave", () => {
+    // ✅ 큰 화면일 땐 glitch 재시작 금지
+    if (el.classList.contains("max")) return;
+    startLabelGlitch(el);
+  });
+}
 
   el.addEventListener("dblclick", () => toggleMax(el));
   el.addEventListener("click", () => {
@@ -593,50 +770,68 @@ function wireWindow(el) {
   });
 }
 
+
+
 function toggleMax(el, forceOn = false) {
   const isMax = el.classList.contains("max");
+  const labelEl = el.querySelector(".label");
 
+  // forceOn 들어오면 기존 max 먼저 정리
   if (forceOn) {
-    document.querySelectorAll(".win.max").forEach(w => {
+    document.querySelectorAll(".win.max").forEach((w) => {
       w.classList.remove("max", "revealed");
       w.dataset.free = "0";
       restoreBox(w);
       updateMaxBtn(w);
+
       if (w.dataset.type === "joke") fitSmallWindow(w);
+      startLabelGlitch(w);
     });
   }
 
   if (isMax) {
     // RESTORE
     el.classList.remove("max", "revealed");
-    restoreBox(el);
     el.dataset.free = "0";
+    restoreBox(el);
 
     requestAnimationFrame(() => {
       if (el.dataset.type === "joke") fitSmallWindow(el);
     });
+
+    // restore 시 glitch 재시작
+    startLabelGlitch(el);
   } else {
     // MAXIMIZE
     saveBox(el);
     el.classList.add("max", "revealed");
     el.dataset.free = "0";
 
-    // inline width/height 제거해서 CSS .win.max가 먹게
-    el.style.width = "";
-    el.style.height = "";
+    // ✅ 확실한 최대화 프레임
+    setMaxFrame(el);
+
+    // ✅ max 된 창을 일단 맨 앞으로
+    bringToFront(el);
 
     requestAnimationFrame(() => {
-      if (el.dataset.free !== "1") centerWindow(el);
       fitTextMax(el);
     });
+
+    // ✅ 큰 화면에서는 glitch 멈추고 원래 라벨 표시
+    stopLabelGlitch(el);
+    if (labelEl) {
+      labelEl.textContent = labelEl.dataset.original || labelEl.textContent;
+    }
   }
 
-  clearOverlaps();
-  if (el.classList.contains("max")) pickOverlaps(el, OVERLAP_COUNT);
+  // ❌ 의도적으로 겹치게/뒤로 보내는 로직 제거
+  // clearOverlaps();
+  // if (el.classList.contains("max")) pickOverlaps(el, OVERLAP_COUNT);
 
   document.querySelectorAll(".win").forEach(applyZRules);
   updateMaxBtn(el);
 }
+
 
 function centerWindow(el) {
   const w = el.offsetWidth;
@@ -653,6 +848,8 @@ function centerWindow(el) {
 let drag = null;
 
 function startDrag(e, el) {
+  if (el.classList.contains("max")) return; // ✅ max 상태에서는 드래그 막기
+  bringToFront(el);
   if (e.button !== 0) return;
 
   const rect = el.getBoundingClientRect();
@@ -723,3 +920,26 @@ window.addEventListener("resize", () => {
   fitSmallWindow(w);
 });
 });
+
+// auto spawn settings
+const SPAWN_EVERY_MS = 1000;   // 3 seconds
+const SPAWN_MIN = 1;
+const SPAWN_MAX = 1;
+const MAX_WINDOWS = 120;       // safety cap (optional but recommended)
+
+function spawnBurst() {
+  const current = document.querySelectorAll(".win").length;
+  if (current >= MAX_WINDOWS) return;
+
+  let count = randInt(SPAWN_MIN, SPAWN_MAX);
+  count = Math.min(count, MAX_WINDOWS - current);
+
+  for (let i = 0; i < count; i++) {
+    spawnRandomWindow();
+  }
+}
+
+// starts after 3s, then repeats every 3s
+setInterval(spawnBurst, SPAWN_EVERY_MS);
+
+startScoreIdleTimer();

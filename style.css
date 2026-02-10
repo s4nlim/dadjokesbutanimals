@@ -35,9 +35,9 @@ body { font-family: "Inter", sans-serif; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 6px 0 8px;
+  padding: 0 0 0 8px;   /* 오른쪽 padding 제거 */
   user-select: none;
-  cursor: url("imgs/grab.png") 0 0, auto;;
+  cursor: url("imgs/grab.png") 0 0, auto;
 }
 .win .label{
   font-size: 12px;
@@ -45,20 +45,32 @@ body { font-family: "Inter", sans-serif; }
   font-weight: 700;
 }
 
-/* controls */
+/* controls wrapper */
 .win .controls{
   display: flex;
-  gap: 4px;
+  height: 100%;
+  gap: 0;               /* 버튼 사이 빈 공간 제거 */
+  margin: 0;
 }
+
+/* + / x button */
 .win .controls button{
-  width: 20px;
-  height: 18px;
+  width: 26px;          /* 바 높이와 맞춤 */
+  height: 100%;
+  padding: 0;           /* 내부 패딩 제거 */
+  margin: 0;            /* 외부 마진 제거 */
   border: 0;
+  border-left: 1px solid rgba(255,255,255,.2);
   background: transparent;
   color: #fff;
   font-weight: 700;
-  cursor: url("imgs/clicker.png") 0 0, auto;;
+  font-size: 14px;
   line-height: 1;
+  display: grid;
+  place-items: center;  /* 아이콘 정중앙 */
+  cursor: url("imgs/clicker.png") 0 0, auto;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .win .controls button:hover{
   background: rgba(255,255,255,.18);
@@ -125,4 +137,263 @@ body { font-family: "Inter", sans-serif; }
 /* a little hint for debugging */
 .win.debug-outline{
   outline: 2px dashed rgba(255,0,0,.35);
+}
+
+.close-meter{
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  color: #fff;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.35);
+  backdrop-filter: blur(2px);
+  pointer-events: none; /* doesn't block clicks */
+}
+.close-meter span{
+  font-weight: 900;
+}
+
+/* score meter fade control */
+.close-meter{
+  opacity: 1;
+  transition: opacity 0.8s ease; /* 천천히 사라짐 */
+}
+
+.close-meter.is-faded{
+  opacity: 0;
+}
+
+:root{
+  --aboutW: min(42vw, 560px);
+  --aboutHandleW: 86px;
+  --aboutHandleH: 24px;
+}
+
+/* 버튼+패널 한 덩어리 */
+.about-dock{
+  position: fixed;
+  inset: 0 0 0 auto; /* top/right/bottom 고정 */
+  width: calc(var(--aboutW) + var(--aboutHandleW));
+  z-index: 12000;
+
+  /* 닫힘: 패널만 오른쪽 밖으로 */
+  transform: translateX(var(--aboutW));
+  transition: transform .42s cubic-bezier(.22,.61,.36,1);
+  pointer-events: none;
+}
+.about-dock.is-open{ transform: translateX(0); }
+
+/* 오른쪽 위 고정 핸들 */
+.about-handle{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--aboutHandleW);
+  height: var(--aboutHandleH);
+
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  background: #0a2a9b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  border: 0.5px solid #fff;     /* 추가 */
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.about-dock.is-open .about-panel{
+  box-shadow:
+    -6px 0 16px rgba(0,0,0,.22),
+    -2px 0 6px rgba(0,0,0,.14) !important;
+}
+
+/* (선택) handle도 같이 살짝 그림자 */
+.about-dock.is-open .about-handle{
+  box-shadow:
+    -2px 2px 6px rgba(0,0,0,.18);
+}
+
+/* 패널: 흰색 풀영역 */
+.about-panel{
+  position: absolute !important;
+  inset: 0 0 0 auto !important; /* top/right/bottom, left auto */
+  width: var(--aboutW);
+  height: 100dvh !important;
+
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+/* 상단 바 숨김 */
+.about-panel .bar{ display: none !important; }
+
+/* 내용 영역 */
+.about-panel .content.about-content{
+  flex: 1;
+  padding: 42px 52px;
+  overflow: auto;
+  background: #fff;
+}
+
+/* 모바일: about가 전체 화면 */
+@media (max-width: 768px){
+  :root{
+    --aboutW: 100vw;
+    --aboutHandleW: 78px;
+  }
+
+  .about-dock{
+    width: calc(100vw + var(--aboutHandleW));
+    transform: translateX(100vw); /* 닫힘 시 핸들만 보임 */
+  }
+
+  .about-panel{
+    width: 100vw;
+    height: 100dvh !important;
+  }
+}
+
+.about-handle{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px; /* ABOUT이랑 아이콘 간격 */
+  cursor: url("imgs/clicker.png") 0 0, auto;
+}
+
+.about-handle .about-qmark{
+  width: 16px;      /* 원하는 크기로 조절 */
+  height: 16px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none; /* 클릭은 버튼 전체로 */
+}
+
+
+/* ===== ABOUT CONTENT STYLE ===== */
+.about-content{
+  --ink:#0f172a;
+  --muted:#4b5563;
+  --blue:#0a2a9b;
+  --line:#dbe3ff;
+  --paper:#ffffff;
+
+  color: var(--ink);
+  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+/* Titles */
+.about-content h2{
+  margin: 0 0 14px;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blue);
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.about-content h3{
+  margin: 28px 0 12px;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+/* Paragraphs */
+.about-content p{
+  margin: 0 0 12px;
+  max-width: 62ch;
+  color: var(--ink);
+}
+
+.about-content .lead{
+  font-size: 1.06rem;
+  font-weight: 700;
+}
+
+/* Small side note (instead of <a>) */
+.about-content .aside{
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
+/* How-it-works box */
+.about-content .how-box{
+  border: 1px solid var(--line);
+  background: #fbfcff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(10, 42, 155, 0.08);
+  max-width: 64ch;
+}
+
+/* List style */
+.about-content ul{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-content li{
+  position: relative;
+  padding-left: 1.3em;
+  margin: 0.45em 0;
+}
+
+.about-content li::before{
+  content: "▸";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.about-content li strong{
+  color: var(--blue);
+}
+
+/* Keycaps (+, ×) */
+.about-content kbd{
+  display: inline-block;
+  min-width: 1.2em;
+  text-align: center;
+  padding: 0.06em 0.38em;
+  font: 700 0.92em/1 "Instrument Sans", sans-serif;
+  color: #111827;
+  background: #fff;
+  border: 1px solid #cfd8ff;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 }

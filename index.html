@@ -14,6 +14,63 @@
 
   <main id="desktop" class="desktop" aria-label="Desktop"></main>
 
+<!-- About Dock: 버튼 + 패널을 하나의 덩어리로 -->
+<div id="aboutDock" class="about-dock">
+  <button id="aboutHandle" class="about-handle" aria-expanded="false" aria-controls="aboutPanel">
+  ABOUT
+  <img src="imgs/questionmark.png" alt="" class="about-qmark" aria-hidden="true" />
+</button>
+
+  <section id="aboutPanel" class="win about-panel" aria-hidden="true">
+    <div class="bar">
+      <div class="label">ABOUT</div>
+      <div class="controls">
+        <button id="aboutClose" class="btn-close" title="close">×</button>
+      </div>
+    </div>
+
+    <div class="content about-content">
+      <h2>ABOUT THIS PAGE</h2>
+    <p class="lead">This page is about my view of dad jokes.</p>
+
+    <p>
+      I show them through an early-internet pop-up advertisement style because many people think dad jokes are
+      random, cheesy, repetitive, and sometimes nonsense.
+    </p>
+
+    <p>
+      I wanted to challenge that idea and make them fun
+      (because dad jokes are FUN<span class="aside">(at least some of them)</span>).
+    </p>
+
+    <p>
+      I designed the screen to feel intentionally chaotic so users can experience an overload of dad jokes lingering in their minds, but laugh at the same time.
+    </p>
+
+    <h3>HOW IT WORKS</h3>
+    <div class="how-box">
+      <ul>
+        <li><strong>Drag</strong> tabs by the blue title bar.</li>
+        <li><kbd>+</kbd> expands a tab and reveals more content.</li>
+        <li><kbd>×</kbd> closes a tab.</li>
+        <li>Try deleting all tabs.</li>
+      </ul>
+    </div>
+
+
+    </div>
+  </section>
+</div>
+
+
+<!-- backdrop -->
+<div id="aboutBackdrop" class="about-backdrop" hidden></div>
+
+
+<div id="closeMeter" class="close-meter" aria-live="polite">
+  TABS THAT YOU TRIED TO CLOSE: <span id="closeCount">0</span>
+</div>
+
   <script src="script.js" defer></script>
 </body>
 </html>
