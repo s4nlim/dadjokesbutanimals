@@ -159,6 +159,9 @@ function startScoreIdleTimer() {
   }, SCORE_IDLE_MS);
 }
 
+const TAB_CLOSE_LIMIT = 20;
+let isBlackout = false;
+let spawnTimer = null; // setInterval id 보관
 
 const aboutDock = document.getElementById("aboutDock");
 const aboutHandle = document.getElementById("aboutHandle");
@@ -211,9 +214,15 @@ function showScoreMeter() {
 }
 
 function bumpCloseCount() {
+  if (isBlackout) return;
+
   closeAttempts += 1;
   if (closeCountEl) closeCountEl.textContent = closeAttempts;
-  showScoreMeter(); // 닫기 시작하면 다시 보이게
+  showScoreMeter();
+
+  if (closeAttempts >= TAB_CLOSE_LIMIT) {
+    triggerBlackout();
+  }
 }
 
 let topOrder = 1; // 추가
@@ -232,6 +241,83 @@ function makeGlitchLabel(min = 6, max = 10) {
 }
 function randGlitchChar() {
   return GLITCH_CHARS[randInt(0, GLITCH_CHARS.length - 1)];
+}
+
+const BLACKOUT_LINES = [
+  "You've deleted 100 tabs.,",
+  "Well...too bad...",
+  "I think you don't like dad jokes.",
+  "Get OFF of my site."
+];
+// 원래 문구 오타 그대로 쓰고 싶으면:
+// const BLACKOUT_LINES = ["To bad,", "I think", "you don't like dad jokes."];
+
+function triggerBlackout() {
+  if (isBlackout) return;
+  isBlackout = true;
+
+  // 자동 생성 멈춤
+  if (spawnTimer) {
+    clearInterval(spawnTimer);
+    spawnTimer = null;
+  }
+
+  // 글리치 타이머 정리
+  document.querySelectorAll(".win").forEach(w => stopLabelGlitch(w));
+
+  const overlay = document.createElement("div");
+  overlay.id = "blackoutOverlay";
+
+  Object.assign(overlay.style, {
+    position: "fixed",
+    inset: "0",
+    background: "#000",
+    color: "#fff",
+    zIndex: "999999",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: "24px",
+    fontFamily: "sans-serif",
+    pointerEvents: "auto"
+  });
+
+  const wrap = document.createElement("div");
+  Object.assign(wrap.style, {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    alignItems: "center"
+  });
+
+  overlay.appendChild(wrap);
+  document.body.appendChild(overlay);
+
+  // 한 줄씩 등장
+  BLACKOUT_LINES.forEach((line, i) => {
+    setTimeout(() => {
+      const p = document.createElement("p");
+      p.textContent = line;
+      Object.assign(p.style, {
+        margin: "0",
+        fontSize: "clamp(20px, 3vw, 44px)",
+        fontWeight: "700",
+        letterSpacing: "0.02em",
+        opacity: "0",
+        transform: "translateY(8px)",
+        transition: "opacity .35s ease, transform .35s ease"
+      });
+
+      wrap.appendChild(p);
+
+      // 다음 프레임에 show
+      requestAnimationFrame(() => {
+        p.style.opacity = "1";
+        p.style.transform = "translateY(0)";
+      });
+    }, i * 1000); // 줄 간격 속도(ms)
+  });
 }
 
 
@@ -922,7 +1008,7 @@ window.addEventListener("resize", () => {
 });
 
 // auto spawn settings
-const SPAWN_EVERY_MS = 1000;   // 3 seconds
+const SPAWN_EVERY_MS = 1000;   // 1 second
 const SPAWN_MIN = 1;
 const SPAWN_MAX = 1;
 const MAX_WINDOWS = 120;       // safety cap (optional but recommended)
@@ -940,6 +1026,6 @@ function spawnBurst() {
 }
 
 // starts after 3s, then repeats every 3s
-setInterval(spawnBurst, SPAWN_EVERY_MS);
+spawnTimer = setInterval(spawnBurst, SPAWN_EVERY_MS);
 
 startScoreIdleTimer();
