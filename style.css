@@ -90,7 +90,6 @@ body { font-family: "Inter", sans-serif; }
   font-size: var(--qSize, 36px);
   line-height: 1.08;
   color: #111;
-
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -101,7 +100,6 @@ body { font-family: "Inter", sans-serif; }
   font-size: var(--aSize, 58px);
   line-height: 1;
   display: none;
-
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -110,18 +108,30 @@ body { font-family: "Inter", sans-serif; }
   font-family: "Ibarra Real Nova", serif;
   font-style: italic;
   font-weight: 800;
-  font-size: 58px;
+  font-size: 1.3em;      /* relative to .q font-size (instead of fixed 58px) */
+  line-height: 1;
+  white-space: nowrap;   /* keeps words like kangaroo from splitting oddly */
 }
+
+/* mobile fine-tune */
+@media (max-width: 768px){
+  .win .q em{
+    font-size: 1.2em;
+  }
+}
+
 
 .win.revealed .answer{ display: block; }
 
 /* image windows */
-.win img{
-  display:block;
-  width:100%;
-  height:auto;
+.win[data-type="img"] img{
+  display: block;
+  width: 100%;
+  object-position: center;
+  background: #fff;
+  height: auto;          /* 핵심: auto */
+  object-fit: initial;   /* contain/cover 제거 */
 }
-
 
 /* maximize */
 .win.max{
@@ -355,3 +365,39 @@ body { font-family: "Inter", sans-serif; }
 .win .controls button{
   touch-action: manipulation;
 }
+
+
+@media (max-width: 768px){
+  .win{
+    min-width: 130px;
+  }
+
+  .win .bar{
+    height: 22px;
+    padding-left: 6px;
+  }
+
+  .win .label{
+    font-size: 10px;
+    letter-spacing: .03em;
+  }
+
+  .win .controls button{
+    width: 22px;
+    font-size: 12px;
+  }
+
+  .win .content{
+    padding: 10px 10px 12px;
+  }
+
+  .win .q{
+    line-height: 1.06;
+  }
+
+  .win .answer{
+    margin-top: 8px;
+  }
+}
+
+

@@ -191,28 +191,24 @@ const panelWindows = new Map();
 
 const PANEL_CONTENT = {
   about: {
-    label: "ABOUT THIS PAGE",
-    html: `
-      <div class="info-content">
-        <h2>ABOUT THIS PAGE</h2>
-        <p>This page is about my view of dad jokes.</p>
-        <p>I show them through an early-internet pop-up advertisement style because many people think dad jokes are random, cheesy, repetitive, and sometimes nonsense.</p>
-        <p>I wanted to challenge that idea and make them fun, because dad jokes are fun (at least some of them).</p>
-        <p>I designed the screen to feel intentionally chaotic so users can experience an overload of lingering jokes but still laugh at the same time.</p>
-      </div>
-    `
-  },
+  label: "ABOUT THIS PAGE",
+  html: `
+    <div class="info-content">
+      <p>This page is about my view of dad jokes.</p>
+      <p>I show them through an early-internet pop-up advertisement style because many people think dad jokes are random, cheesy, repetitive, and sometimes nonsense.</p>
+      <p>I wanted to challenge that idea and make them fun, because dad jokes are fun (at least some of them).</p>
+      <p>I designed the screen to feel intentionally chaotic so users can experience an overload of lingering jokes but still laugh at the same time.</p>
+    </div>
+  `
+},
   help: {
     label: "HELP",
     html: `
       <div class="info-content">
-        <h2>HELP</h2>
-        <ul>
-          <li><strong>Drag</strong> tabs by the blue bar.</li>
-          <li><strong>+</strong> expands a tab.</li>
-          <li><strong>×</strong> closes a tab.</li>
-          <li>Try deleting as many tabs as you can.</li>
-        </ul>
+          <p><strong>Drag</strong> tabs by the blue bar.</p>
+          <p><strong>+</strong> expands a tab.</>p
+          <p><strong>×</strong> closes a tab.</p>
+          <p>TRY DELETING AS MANY AS YOU CAN.</p>
       </div>
     `
   },
@@ -220,8 +216,7 @@ const PANEL_CONTENT = {
     label: "FIND",
     html: `
       <div class="info-content">
-        <h2>FIND</h2>
-        <p>Deleted tabs: <strong class="js-deleted-count">0</strong></p>
+        <p>TABS THAT YOU TRIED TO DELETE: <strong class="js-deleted-count">0</strong></p>
       </div>
     `
   }
@@ -234,25 +229,89 @@ function setTaskButtonActive(key, isActive) {
   btn.setAttribute("aria-pressed", String(isActive));
 }
 
+function getPanelProfile() {
+  const mobile = window.innerWidth <= 768;
+  const freeH = window.innerHeight - getTaskbarHeight();
+
+  if (mobile) {
+    const maxW = Math.max(180, window.innerWidth - 12);
+    return {
+      MIN_W: 160,
+      MAX_W: maxW,
+      MIN_H: 110,
+      MAX_H: Math.max(140, freeH - 12),
+      BUMP: 14
+    };
+  }
+
+  const maxW = Math.min(980, window.innerWidth - 24);
+  return {
+    MIN_W: 220,   // 기존 380 -> 220
+    MAX_W: Math.max(360, maxW),
+    MIN_H: 120,
+    MAX_H: Math.min(860, freeH - 16),
+    BUMP: 44
+  };
+}
+
+
+function fitPanelWindow(win) {
+  if (win.dataset.type !== "panel") return;
+  if (win.classList.contains("max")) return;
+
+  const content = win.querySelector(".content");
+  if (!content) return;
+
+  const { MIN_W, MAX_W, MIN_H, MAX_H, BUMP } = getPanelProfile();
+
+  // 시작 폭
+  let w = clamp(win.offsetWidth || 620, MIN_W, MAX_W);
+  win.style.width = w + "px";
+
+  // 높이가 cap 넘으면 폭을 넓혀 줄바꿈 줄이기
+  let guard = 18;
+  while (guard-- > 0) {
+    const { needH } = measureNeed(win);
+    if (needH <= MAX_H || w >= MAX_W) {
+      win.style.height = clamp(needH, MIN_H, MAX_H) + "px";
+      break;
+    }
+    w = Math.min(MAX_W, w + BUMP);
+    win.style.width = w + "px";
+  }
+
+  syncContentBox(win);
+
+  // cap 걸리면 내용만 스크롤
+  content.style.overflowY =
+    content.scrollHeight > content.clientHeight + 1 ? "auto" : "hidden";
+
+  keepWindowInViewport(win);
+}
+
 function placePanelWindow(el) {
+  // append 이후 호출되어야 실측 가능
+  fitPanelWindow(el);
+
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  const taskbarH = getTaskbarHeight();
+
   if (window.innerWidth <= 768) {
-    el.style.width = "calc(100vw - 12px)";
-    el.style.height = "calc(100vh - 86px)";
+    // 모바일도 풀스크린 고정 X
     el.style.left = "6px";
     el.style.top = "8px";
   } else {
-    const w = Math.min(680, window.innerWidth - 20);
-    const h = Math.min(560, window.innerHeight - 90);
-    el.style.width = `${w}px`;
-    el.style.height = `${h}px`;
-
-    const x = Math.round((window.innerWidth - w) / 2 + randInt(-20, 20));
-    const y = Math.round((window.innerHeight - h) / 2 + randInt(-20, 20));
+    const x = Math.round((window.innerWidth - w) / 2 + randInt(-26, 26));
+    const y = Math.round((window.innerHeight - taskbarH - h) / 2 + randInt(-18, 18));
 
     el.style.left = clamp(x, 6, window.innerWidth - w - 6) + "px";
-    el.style.top = clamp(y, 6, window.innerHeight - h - 74) + "px";
+    el.style.top = clamp(y, 6, window.innerHeight - taskbarH - h - 6) + "px";
   }
+
+  keepWindowInViewport(el);
 }
+
 
 function createPanelWindow(key) {
   const data = PANEL_CONTENT[key];
@@ -263,13 +322,12 @@ function createPanelWindow(key) {
   el.dataset.type = "panel";
   el.dataset.panelKey = key;
   el.dataset.noGlitch = "1";
-  el.dataset.countClose = "0"; // 패널 닫기는 close meter 카운트 제외
+  el.dataset.countClose = "0";
 
   el.innerHTML = `
     <div class="bar">
       <div class="label">${data.label}</div>
       <div class="controls">
-        <button class="btn-max" title="maximize">+</button>
         <button class="btn-close" title="close">×</button>
       </div>
     </div>
@@ -279,10 +337,9 @@ function createPanelWindow(key) {
   `;
 
   wireWindow(el);
-  updateMaxBtn(el);
-  placePanelWindow(el);
   return el;
 }
+
 
 function updateFindPanel() {
   const findWin = panelWindows.get("find");
@@ -307,17 +364,28 @@ function togglePanel(key) {
   if (!el) return;
 
   desktop.appendChild(el);
+  placePanelWindow(el);   // append 후 실측 배치
+  watchFit(el);           // 패널도 resize observe
   bringToFront(el);
+
   panelWindows.set(key, el);
   setTaskButtonActive(key, true);
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      fitPanelWindow(el);
+      keepWindowInViewport(el);
+    });
+  }
 
   if (key === "find") updateFindPanel();
 }
 
 
+
 // -------------------- helpers --------------------
 
-const GLITCH_CHARS = "∆∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏√∫µɆɎÐÞŁØÆŒßĦ";
+const GLITCH_CHARS = "∆∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏√∫µɆɎÐÞŁØÆŒßĦ░▒▓";
 
 function makeGlitchLabel(min = 6, max = 10) {
   const len = randInt(min, max);
@@ -476,36 +544,87 @@ function randomPos(w = 360, h = 220) {
 }
 
 
+function getTaskbarHeight() {
+  const tb = document.querySelector(".taskbar");
+  return tb ? tb.offsetHeight : 0;
+}
+
+function applyImageWindowSize(win, imgW, imgH) {
+  const bar = win.querySelector(".bar");
+  const img = win.querySelector("img");
+  if (!bar || !img) return;
+
+  const cs = getComputedStyle(win);
+  const borderX = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+  const borderY = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+  const barH = bar.offsetHeight || 26;
+
+  const contentW = Math.max(1, Math.round(imgW));
+  const contentH = Math.max(1, Math.round(imgH));
+
+  // 콘텐츠(이미지) 크기에 정확히 맞는 outer window 크기
+  win.style.width = `${Math.round(contentW + borderX)}px`;
+  win.style.height = `${Math.round(barH + contentH + borderY)}px`;
+
+  // 이미지 영역 정확히 일치
+  img.style.width = `${contentW}px`;
+  img.style.height = `${contentH}px`;
+  img.style.display = "block";
+  img.style.objectFit = "fill";   // 현재는 동일 비율로 계산하므로 왜곡 없음
+  img.style.objectPosition = "center";
+}
+
 function fitImageWindow(win) {
   const img = win.querySelector("img");
-  if (!img || !img.naturalWidth || !img.naturalHeight) return;
+  const bar = win.querySelector(".bar");
+  if (!img || !bar || !img.naturalWidth || !img.naturalHeight) return;
 
-  const { MIN_W, MIN_H } = getProfile();
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  const barH = bar.offsetHeight || 26;
+  const taskbarH = getTaskbarHeight();
 
-  // 모바일/데스크탑 폭 범위(원하는 대로 조절 가능)
-  const maxW = window.innerWidth <= 480 ? 260 : 420;
-  const minW = window.innerWidth <= 480 ? 170 : 260;
+  // "원본 크기" 우선, 화면 넘칠 때만 축소
+  const maxW = Math.floor(window.innerWidth * 0.75);
+  const maxH = Math.floor((window.innerHeight - taskbarH) * 0.8);
+  const scale = Math.min(1, maxW / nw, (maxH - barH) / nh);
 
-  // 이미지 비율
-  const ratio = img.naturalWidth / img.naturalHeight;
+  const w = Math.max(60, nw * scale);
+  const h = Math.max(60, nh * scale);
 
-  // 폭 랜덤으로 뽑고, 높이는 비율로 계산
-  let w = randInt(minW, maxW);
-  let h = Math.round(w / ratio);
+  applyImageWindowSize(win, w, h);
+}
 
-  // 화면 cap 적용
-  w = clamp(w, MIN_W, CAP_W());
-  h = clamp(h, MIN_H, CAP_H());
+function fitImageMax(win) {
+  const img = win.querySelector("img");
+  const bar = win.querySelector(".bar");
+  if (!img || !bar || !img.naturalWidth || !img.naturalHeight) return;
 
-  // 혹시 세로로 너무 길면 높이를 먼저 제한하고 폭을 다시 계산
-  if (h >= CAP_H()) {
-    h = CAP_H();
-    w = Math.round(h * ratio);
-    w = clamp(w, MIN_W, CAP_W());
-  }
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  const barH = bar.offsetHeight || 26;
+  const taskbarH = getTaskbarHeight();
 
-  win.style.width = w + "px";
-  win.style.height = h + "px";
+  const pad = window.innerWidth <= 768 ? 6 : 10;
+  const freeH = window.innerHeight - taskbarH;
+
+  // 화면 내에서 최대 확대 (비율 유지, 잘림 없음)
+  const availW = Math.max(120, window.innerWidth - pad * 2);
+  const availH = Math.max(100, freeH - pad * 2 - barH);
+
+  const scale = Math.min(availW / nw, availH / nh);
+  const w = Math.max(120, Math.floor(nw * scale));
+  const h = Math.max(80, Math.floor(nh * scale));
+
+  applyImageWindowSize(win, w, h);
+
+  // 창 자체 중앙 배치
+  const outerW = win.offsetWidth;
+  const outerH = win.offsetHeight;
+
+  win.style.position = "fixed";
+  win.style.left = `${Math.max(pad, Math.round((window.innerWidth - outerW) / 2))}px`;
+  win.style.top = `${Math.max(pad, Math.round((freeH - outerH) / 2))}px`;
 }
 
 // ✅ maximize 전에 원래 크기/위치/포지션 저장
@@ -583,19 +702,41 @@ function syncContentBox(win) {
   content.style.overflow = "hidden";
 }
 
-// ✅ 작은 창: 랜덤 폰트 먼저 → 창이 텍스트에 딱 맞게
 function getProfile() {
   const w = window.innerWidth;
 
-  // 모바일
-  if (w <= 480) return { Q_RANGE: [10, 20], A_MULT: 1.05, MIN_W: 150, MIN_H: 105 };
+  // mobile
+  if (w <= 480) {
+    return { Q_RANGE: [8, 16], A_MULT: 1.0, MIN_W: 130, MIN_H: 95 };
+  }
 
-  // 데스크탑
-  return { Q_RANGE: [25, 55], A_MULT: 1.25, MIN_W: 240, MIN_H: 160 };
+  // tablet / small laptop
+  if (w <= 1024) {
+    return { Q_RANGE: [18, 32], A_MULT: 1.12, MIN_W: 200, MIN_H: 140 };
+  }
+
+  // desktop
+  if (w <= 1440) {
+    return { Q_RANGE: [26, 46], A_MULT: 1.22, MIN_W: 240, MIN_H: 160 };
+  }
+
+  // large desktop
+  return { Q_RANGE: [30, 54], A_MULT: 1.26, MIN_W: 260, MIN_H: 180 };
 }
 
-const CAP_W = () => Math.min(720, Math.floor(window.innerWidth * 0.92));
-const CAP_H = () => Math.min(820, Math.floor(window.innerHeight * 0.92));
+const CAP_W = () => {
+  if (window.innerWidth <= 768) {
+    return Math.min(260, Math.floor(window.innerWidth * 0.68));
+  }
+  return Math.min(720, Math.floor(window.innerWidth * 0.92));
+};
+
+const CAP_H = () => {
+  if (window.innerWidth <= 768) {
+    return Math.min(280, Math.floor(window.innerHeight * 0.5));
+  }
+  return Math.min(820, Math.floor(window.innerHeight * 0.92));
+};
 
 
 
@@ -826,6 +967,11 @@ function createImageWindow() {
   const el = document.createElement("section");
   el.className = "win";
   el.dataset.type = "img";
+  el.style.minWidth = "0px";
+  el.style.minHeight = "0px";
+  el.style.padding = "0px";
+  el.style.overflow = "hidden";
+  el.style.boxSizing = "border-box";
 
   el.innerHTML = `
     <div class="bar">
@@ -846,7 +992,6 @@ function createImageWindow() {
   updateMaxBtn(el);
   return el;
 }
-
 
 function spawnRandomWindow() {
   const makeImg = Math.random() < 0.25;
@@ -870,7 +1015,7 @@ function spawnRandomWindow() {
 
   } else {
     // 텍스트 탭: 폭만 랜덤, 높이는 내용에 맞춤
-    el.style.width = (window.innerWidth <= 480 ? randInt(170, 260) : randInt(260, 420)) + "px";
+    el.style.width = (window.innerWidth <= 768 ? randInt(140, 220) : randInt(260, 420)) + "px";
     el.style.height = "auto";
     fitSmallWindow(el);
 
@@ -973,8 +1118,14 @@ function toggleMax(el, forceOn = false) {
       restoreBox(w);
       updateMaxBtn(w);
 
-      if (w.dataset.type === "joke") fitSmallWindow(w);
-      startLabelGlitch(w);
+      if (w.dataset.type === "joke") {
+  fitSmallWindow(w);
+} else if (w.dataset.type === "img") {
+  fitImageWindow(w);         // 핵심: 강제 restore된 이미지도 다시 fit
+  keepWindowInViewport(w);
+}
+startLabelGlitch(w);
+
     });
   }
 
@@ -985,9 +1136,13 @@ function toggleMax(el, forceOn = false) {
     restoreBox(el);
 
     requestAnimationFrame(() => {
-      if (el.dataset.type === "joke") fitSmallWindow(el);
-    });
-
+  if (el.dataset.type === "joke") {
+    fitSmallWindow(el);
+  } else if (el.dataset.type === "img") {
+    fitImageWindow(el);      // 핵심: 이미지도 다시 fit
+    keepWindowInViewport(el);
+  }
+}); 
     // restore 시 glitch 재시작
     startLabelGlitch(el);
   } else {
@@ -996,15 +1151,17 @@ function toggleMax(el, forceOn = false) {
     el.classList.add("max", "revealed");
     el.dataset.free = "0";
 
-    // ✅ 확실한 최대화 프레임
-    setMaxFrame(el);
-
-    // ✅ max 된 창을 일단 맨 앞으로
     bringToFront(el);
 
+  if (el.dataset.type === "img") {
+    fitImageMax(el);
+  } else {
+    setMaxFrame(el);
     requestAnimationFrame(() => {
       fitTextMax(el);
     });
+  }
+
 
     // ✅ 큰 화면에서는 glitch 멈추고 원래 라벨 표시
     stopLabelGlitch(el);
@@ -1019,6 +1176,20 @@ function toggleMax(el, forceOn = false) {
 
   document.querySelectorAll(".win").forEach(applyZRules);
   updateMaxBtn(el);
+}
+
+function keepWindowInViewport(el) {
+  const taskbarH = getTaskbarHeight();
+  const minPad = 6;
+
+  const maxLeft = Math.max(minPad, window.innerWidth - el.offsetWidth - minPad);
+  const maxTop  = Math.max(minPad, window.innerHeight - taskbarH - el.offsetHeight - minPad);
+
+  const left = parseFloat(el.style.left || "0");
+  const top  = parseFloat(el.style.top || "0");
+
+  el.style.left = clamp(isNaN(left) ? minPad : left, minPad, maxLeft) + "px";
+  el.style.top  = clamp(isNaN(top) ? minPad : top, minPad, maxTop) + "px";
 }
 
 
@@ -1108,10 +1279,12 @@ function watchFit(win) {
     win._fitting = true;
 
     if (win.classList.contains("max")) {
-      fitTextMax(win);
-    } else if (win.dataset.type === "joke") {
-      fitSmallWindow(win);
-    }
+  if (win.dataset.type === "img") fitImageMax(win);
+  else fitTextMax(win);
+} else if (win.dataset.type === "joke") {
+  fitSmallWindow(win);
+}
+
 
     win._fitting = false;
   });
@@ -1129,25 +1302,40 @@ document.getElementById("taskbar")?.addEventListener("click", (e) => {
   togglePanel(key);
 });
 
+
 // -------------------- init --------------------
 const base = Math.floor((window.innerWidth * window.innerHeight) / 60000);
 for (let i = 0; i < base; i++) spawnRandomWindow();
 
 window.addEventListener("resize", () => {
+  const nowMobile = isMobileView();
+if (window.__lastMobile !== nowMobile) {
+  window.__lastMobile = nowMobile;
+  restartSpawnTimer();
+}
   document.querySelectorAll(".win.max").forEach(w => {
+  if (w.dataset.type === "img") {
+    fitImageMax(w);
+  } else {
     if (w.dataset.free !== "1") centerWindow(w);
     fitTextMax(w);
-  });
+  }
+});
+
 
   document.querySelectorAll(".win:not(.max)").forEach(w => {
-  if (w.dataset.type !== "joke") return;
-
-  // ✅ 화면 크기 바뀌면(특히 모바일) 폰트 사이즈 다시 뽑기
-  delete w.dataset.qSize;
-  delete w.dataset.aSize;
-
-  fitSmallWindow(w);
+  if (w.dataset.type === "joke") {
+    delete w.dataset.qSize;
+    delete w.dataset.aSize;
+    fitSmallWindow(w);
+  } else if (w.dataset.type === "img") {
+    fitImageWindow(w);       // 핵심: 화면 작아지면 이미지 창도 다시 fit
+    keepWindowInViewport(w);
+  }
 });
+
+window.__lastMobile = isMobileView();
+
 
 panelWindows.forEach((w) => {
   if (!w.isConnected) return;
@@ -1161,16 +1349,24 @@ panelWindows.forEach((w) => {
 });
 
 // auto spawn settings
-const SPAWN_EVERY_MS = 1000;   // 1 second
+const MOBILE_BP = 768;
 const SPAWN_MIN = 1;
 const SPAWN_MAX = 1;
-const MAX_WINDOWS = 120;       // safety cap (optional but recommended)
+const MAX_WINDOWS = 120;
+
+function isMobileView() {
+  return window.matchMedia(`(max-width: ${MOBILE_BP}px)`).matches;
+}
+
+function getSpawnEveryMs() {
+  return isMobileView() ? 1500 : 1000; // 모바일 2초, 데스크탑 1초
+}
 
 function spawnBurst() {
   const current = document.querySelectorAll(".win").length;
   if (current >= MAX_WINDOWS) return;
 
-  let count = randInt(SPAWN_MIN, SPAWN_MAX);
+  let count = randInt(SPAWN_MIN, SPAWN_MAX); // 현재는 항상 1개
   count = Math.min(count, MAX_WINDOWS - current);
 
   for (let i = 0; i < count; i++) {
@@ -1178,8 +1374,11 @@ function spawnBurst() {
   }
 }
 
-// starts after 3s, then repeats every 3s
-spawnTimer = setInterval(spawnBurst, SPAWN_EVERY_MS);
+function restartSpawnTimer() {
+  if (spawnTimer) clearInterval(spawnTimer);
+  spawnTimer = setInterval(spawnBurst, getSpawnEveryMs());
+}
 
+restartSpawnTimer();
 startScoreIdleTimer();
 updateFindPanel();
