@@ -168,219 +168,135 @@ body { font-family: "Inter", sans-serif; }
   opacity: 0;
 }
 
-:root{
-  --aboutW: min(42vw, 560px);
-  --aboutHandleW: 86px;
-  --aboutHandleH: 24px;
-}
-
-/* 버튼+패널 한 덩어리 */
-.about-dock{
+/* ===== Taskbar (old window style) ===== */
+.taskbar{
   position: fixed;
-  inset: 0 0 0 auto; /* top/right/bottom 고정 */
-  width: calc(var(--aboutW) + var(--aboutHandleW));
-  z-index: 12000;
-
-  /* 닫힘: 패널만 오른쪽 밖으로 */
-  transform: translateX(var(--aboutW));
-  transition: transform .42s cubic-bezier(.22,.61,.36,1);
-  pointer-events: none;
-}
-.about-dock.is-open{ transform: translateX(0); }
-
-/* 오른쪽 위 고정 핸들 */
-.about-handle{
-  position: absolute;
-  top: 0;
   left: 0;
-  width: var(--aboutHandleW);
-  height: var(--aboutHandleH);
+  right: 0;
+  bottom: 0;
+  z-index: 13000;
 
-  margin: 0;
-  padding: 0 8px;
-  border: 0;
-  cursor: pointer;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  background: #0a2a9b;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  border: 0.5px solid #fff;     /* 추가 */
-  box-sizing: border-box;
-  pointer-events: auto;
-}
-
-.about-dock.is-open .about-panel{
-  box-shadow:
-    -6px 0 16px rgba(0,0,0,.22),
-    -2px 0 6px rgba(0,0,0,.14) !important;
-}
-
-/* (선택) handle도 같이 살짝 그림자 */
-.about-dock.is-open .about-handle{
-  box-shadow:
-    -2px 2px 6px rgba(0,0,0,.18);
-}
-
-/* 패널: 흰색 풀영역 */
-.about-panel{
-  position: absolute !important;
-  inset: 0 0 0 auto !important; /* top/right/bottom, left auto */
-  width: var(--aboutW);
-  height: 100dvh !important;
-
-  margin: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: #fff !important;
-  box-shadow: none !important;
-
+  height: 66px;
+  padding: 8px;
   display: flex;
-  flex-direction: column;
-  pointer-events: auto;
+  gap: 8px;
+  align-items: stretch;
+
+  background: #bfc3ca;
+  border-top: 2px solid #e8ebef;
+  box-shadow: inset 0 1px 0 #eef1f5;
 }
 
-/* 상단 바 숨김 */
-.about-panel .bar{ display: none !important; }
-
-/* 내용 영역 */
-.about-panel .content.about-content{
-  flex: 1;
-  padding: 42px 52px;
-  overflow: auto;
-  background: #fff;
-}
-
-/* 모바일: about가 전체 화면 */
-@media (max-width: 768px){
-  :root{
-    --aboutW: 100vw;
-    --aboutHandleW: 78px;
-  }
-
-  .about-dock{
-    width: calc(100vw + var(--aboutHandleW));
-    transform: translateX(100vw); /* 닫힘 시 핸들만 보임 */
-  }
-
-  .about-panel{
-    width: 100vw;
-    height: 100dvh !important;
-  }
-}
-
-.about-handle{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px; /* ABOUT이랑 아이콘 간격 */
-  cursor: url("imgs/clicker.png") 0 0, auto;
-}
-
-.about-handle .about-qmark{
-  width: 16px;      /* 원하는 크기로 조절 */
-  height: 16px;
-  display: block;
-  object-fit: contain;
-  pointer-events: none; /* 클릭은 버튼 전체로 */
-}
-
-
-/* ===== ABOUT CONTENT STYLE ===== */
-.about-content{
-  --ink:#0f172a;
-  --muted:#4b5563;
-  --blue:#0a2a9b;
-  --line:#dbe3ff;
-  --paper:#ffffff;
-
-  color: var(--ink);
-  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.65;
-  letter-spacing: 0.01em;
-}
-
-/* Titles */
-.about-content h2{
-  margin: 0 0 14px;
-  font-size: clamp(26px, 3vw, 38px);
+.taskbar-btn{
+  min-width: 110px;
+  padding: 0 18px;
+  border: 2px solid #6f7684;
+  border-top-color: #f3f5f8;
+  border-left-color: #f3f5f8;
+  background: #d7dbe2;
+  color: #000;
   font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--blue);
-  border-bottom: 2px solid var(--line);
-  padding-bottom: 10px;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: .01em;
+  cursor: url("imgs/clicker.png") 0 0, auto;
+  box-shadow: inset -1px -1px 0 #7a8190, inset 1px 1px 0 #ffffff;
+  transition: background .12s ease, box-shadow .12s ease, transform .08s ease;
 }
 
-.about-content h3{
-  margin: 28px 0 12px;
-  font-size: clamp(16px, 2vw, 22px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--blue);
+.taskbar-btn:hover{
+  background: #e2e6ed;
 }
 
-/* Paragraphs */
-.about-content p{
-  margin: 0 0 12px;
-  max-width: 62ch;
-  color: var(--ink);
+.taskbar-btn.is-active,
+.taskbar-btn[aria-pressed="true"]{
+  background: #c6cbd3;
+  border-top-color: #6f7684;
+  border-left-color: #6f7684;
+  border-right-color: #f3f5f8;
+  border-bottom-color: #f3f5f8;
+  box-shadow: inset 2px 2px 0 #7a8190, inset -1px -1px 0 #ffffff;
+  transform: translateY(1px);
 }
 
-.about-content .lead{
-  font-size: 1.06rem;
-  font-weight: 700;
+/* ===== Info windows opened by taskbar ===== */
+.win.info-win{
+  width: min(680px, calc(100vw - 20px));
+  height: min(560px, calc(100vh - 90px));
+  border: 1px solid #cfcfcf;
 }
 
-/* Small side note (instead of <a>) */
-.about-content .aside{
-  display: inline-block;
-  margin-left: 4px;
-  font-size: 0.8em;
-  color: var(--muted);
+.win.info-win .content{
+  overflow: auto;
+  padding: 22px 22px 28px;
+  background: #efefef;
 }
 
-/* How-it-works box */
-.about-content .how-box{
-  border: 1px solid var(--line);
-  background: #fbfcff;
-  padding: 14px 16px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(10, 42, 155, 0.08);
-  max-width: 64ch;
+.info-content{
+  color: #111;
+  line-height: 1.45;
 }
 
-/* List style */
-.about-content ul{
+.info-content h2{
+  margin: 0 0 14px;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.info-content p{
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+  max-width: 45ch;
+}
+
+.info-content h3{
+  margin: 22px 0 10px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.info-content ul{
   margin: 0;
-  padding: 0;
-  list-style: none;
+  padding-left: 18px;
 }
 
-.about-content li{
-  position: relative;
-  padding-left: 1.3em;
-  margin: 0.45em 0;
+.info-content li{
+  margin: 6px 0;
+  font-size: 17px;
+  font-weight: 600;
 }
 
-.about-content li::before{
-  content: "▸";
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: var(--blue);
-  font-weight: 700;
-}
+/* mobile priority */
+@media (max-width: 768px){
+  .taskbar{
+    height: 74px;
+    padding: 8px 6px;
+    gap: 6px;
+  }
 
-.about-content li strong{
-  color: var(--blue);
+  .taskbar-btn{
+    flex: 1;
+    min-width: 0;
+    font-size: 20px;
+    padding: 0 6px;
+  }
+
+  .win.info-win{
+    width: calc(100vw - 12px) !important;
+    height: calc(100vh - 86px) !important;
+    left: 6px !important;
+    top: 8px !important;
+  }
+
+  .win.info-win .content{
+    padding: 16px 14px 20px;
+  }
+
+  .info-content h2{ font-size: 28px; }
+  .info-content p,
+  .info-content li{ font-size: 16px; }
 }
 
 /* Keycaps (+, ×) */
@@ -426,4 +342,16 @@ body { font-family: "Inter", sans-serif; }
   font-size: 64px;    /* 필요하면 48px/56px로 줄여 */
   font-weight: 700;
   line-height: 1.15;
+}
+
+/* 드래그 가능한 타이틀바 */
+.win .bar{
+  touch-action: none;           /* 모바일에서 스와이프/스크롤 대신 드래그 */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 버튼 탭 반응성 */
+.win .controls button{
+  touch-action: manipulation;
 }

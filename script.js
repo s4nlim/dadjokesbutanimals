@@ -163,49 +163,6 @@ const TAB_CLOSE_LIMIT = 20;
 let isBlackout = false;
 let spawnTimer = null; // setInterval id 보관
 
-const aboutDock = document.getElementById("aboutDock");
-const aboutHandle = document.getElementById("aboutHandle");
-const aboutPanel = document.getElementById("aboutPanel");
-const aboutClose = document.getElementById("aboutClose");
-
-function setAbout(open){
-  aboutDock.classList.toggle("is-open", open);
-  aboutHandle.setAttribute("aria-expanded", String(open));
-  aboutPanel.setAttribute("aria-hidden", String(!open));
-}
-
-function toggleAbout(){
-  const isOpen = aboutDock.classList.contains("is-open");
-  setAbout(!isOpen); // 다시 누르면 닫힘
-}
-
-aboutHandle?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleAbout();
-});
-
-aboutClose?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  setAbout(false);
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") setAbout(false);
-});
-
-/* 열려 있을 때 바깥 클릭하면 닫고 싶으면 유지 */
-document.addEventListener("pointerdown", (e) => {
-  if (!aboutDock.classList.contains("is-open")) return;
-  if (aboutDock.contains(e.target)) return;
-  setAbout(false);
-});
-
-// ESC로 닫기
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && aboutPanel?.classList.contains("is-open")) {
-    setAboutOpen(false);
-  }
-});
 
 
 function showScoreMeter() {
@@ -220,12 +177,143 @@ function bumpCloseCount() {
   if (closeCountEl) closeCountEl.textContent = closeAttempts;
   showScoreMeter();
 
+  updateFindPanel(); // ✅ FIND 실시간 반영
+
   if (closeAttempts >= TAB_CLOSE_LIMIT) {
     triggerBlackout();
   }
 }
 
 let topOrder = 1; // 추가
+
+/* ===== taskbar panel windows ===== */
+const panelWindows = new Map();
+
+const PANEL_CONTENT = {
+  about: {
+    label: "ABOUT THIS PAGE",
+    html: `
+      <div class="info-content">
+        <h2>ABOUT THIS PAGE</h2>
+        <p>This page is about my view of dad jokes.</p>
+        <p>I show them through an early-internet pop-up advertisement style because many people think dad jokes are random, cheesy, repetitive, and sometimes nonsense.</p>
+        <p>I wanted to challenge that idea and make them fun, because dad jokes are fun (at least some of them).</p>
+        <p>I designed the screen to feel intentionally chaotic so users can experience an overload of lingering jokes but still laugh at the same time.</p>
+      </div>
+    `
+  },
+  help: {
+    label: "HELP",
+    html: `
+      <div class="info-content">
+        <h2>HELP</h2>
+        <ul>
+          <li><strong>Drag</strong> tabs by the blue bar.</li>
+          <li><strong>+</strong> expands a tab.</li>
+          <li><strong>×</strong> closes a tab.</li>
+          <li>Try deleting as many tabs as you can.</li>
+        </ul>
+      </div>
+    `
+  },
+  find: {
+    label: "FIND",
+    html: `
+      <div class="info-content">
+        <h2>FIND</h2>
+        <p>Deleted tabs: <strong class="js-deleted-count">0</strong></p>
+      </div>
+    `
+  }
+};
+
+function setTaskButtonActive(key, isActive) {
+  const btn = document.querySelector(`.taskbar-btn[data-panel="${key}"]`);
+  if (!btn) return;
+  btn.classList.toggle("is-active", isActive);
+  btn.setAttribute("aria-pressed", String(isActive));
+}
+
+function placePanelWindow(el) {
+  if (window.innerWidth <= 768) {
+    el.style.width = "calc(100vw - 12px)";
+    el.style.height = "calc(100vh - 86px)";
+    el.style.left = "6px";
+    el.style.top = "8px";
+  } else {
+    const w = Math.min(680, window.innerWidth - 20);
+    const h = Math.min(560, window.innerHeight - 90);
+    el.style.width = `${w}px`;
+    el.style.height = `${h}px`;
+
+    const x = Math.round((window.innerWidth - w) / 2 + randInt(-20, 20));
+    const y = Math.round((window.innerHeight - h) / 2 + randInt(-20, 20));
+
+    el.style.left = clamp(x, 6, window.innerWidth - w - 6) + "px";
+    el.style.top = clamp(y, 6, window.innerHeight - h - 74) + "px";
+  }
+}
+
+function createPanelWindow(key) {
+  const data = PANEL_CONTENT[key];
+  if (!data) return null;
+
+  const el = document.createElement("section");
+  el.className = "win info-win";
+  el.dataset.type = "panel";
+  el.dataset.panelKey = key;
+  el.dataset.noGlitch = "1";
+  el.dataset.countClose = "0"; // 패널 닫기는 close meter 카운트 제외
+
+  el.innerHTML = `
+    <div class="bar">
+      <div class="label">${data.label}</div>
+      <div class="controls">
+        <button class="btn-max" title="maximize">+</button>
+        <button class="btn-close" title="close">×</button>
+      </div>
+    </div>
+    <div class="content">
+      ${data.html}
+    </div>
+  `;
+
+  wireWindow(el);
+  updateMaxBtn(el);
+  placePanelWindow(el);
+  return el;
+}
+
+function updateFindPanel() {
+  const findWin = panelWindows.get("find");
+  if (!findWin || !findWin.isConnected) return;
+
+  const countEl = findWin.querySelector(".js-deleted-count");
+  if (countEl) countEl.textContent = String(closeAttempts);
+}
+
+function togglePanel(key) {
+  const existing = panelWindows.get(key);
+
+  if (existing && existing.isConnected) {
+    stopLabelGlitch(existing);
+    existing.remove();
+    panelWindows.delete(key);
+    setTaskButtonActive(key, false);
+    return;
+  }
+
+  const el = createPanelWindow(key);
+  if (!el) return;
+
+  desktop.appendChild(el);
+  bringToFront(el);
+  panelWindows.set(key, el);
+  setTaskButtonActive(key, true);
+
+  if (key === "find") updateFindPanel();
+}
+
 
 // -------------------- helpers --------------------
 
@@ -344,9 +432,9 @@ function startLabelGlitch(win) {
       if (!win.isConnected) return;
       chars[i] = randGlitchChar();
       labelEl.textContent = chars.join("");
-      timers[i] = setTimeout(tick, randInt(80, 900));
+      timers[i] = setTimeout(tick, randInt(900, 2000));
     };
-    timers[i] = setTimeout(tick, randInt(30, 700));
+    timers[i] = setTimeout(tick, randInt(900, 1000));
   };
 
   for (let i = 0; i < chars.length; i++) {
@@ -809,8 +897,7 @@ function spawnRandomWindow() {
 
 // -------------------- behavior wiring --------------------
 function wireWindow(el) {
-  el.addEventListener("mousedown", () => applyZRules(el));
-  el.addEventListener("mousedown", () => bringToFront(el));
+  el.addEventListener("pointerdown", () => bringToFront(el));
 
   const maxBtn = el.querySelector(".btn-max");
   if (maxBtn) {
@@ -821,33 +908,49 @@ function wireWindow(el) {
   }
 
   const closeBtn = el.querySelector(".btn-close");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+if (closeBtn) {
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    if (el.dataset.countClose !== "0") {
       bumpCloseCount();
-      stopLabelGlitch(el); // ✅ 타이머 정리
-      el.remove();
-    });
-  }
+    }
+
+    stopLabelGlitch(el);
+
+    const panelKey = el.dataset.panelKey;
+    el.remove();
+
+    if (panelKey) {
+      panelWindows.delete(panelKey);
+      setTaskButtonActive(panelKey, false);
+    }
+
+    updateFindPanel(); // ✅ 창 닫힌 뒤도 반영
+  });
+}
+
 
   const bar = el.querySelector(".bar");
   const labelEl = el.querySelector(".label");
 
   if (bar) {
-  bar.addEventListener("mousedown", (e) => startDrag(e, el));
+  bar.addEventListener("pointerdown", (e) => startDrag(e, el));
 
   bar.addEventListener("mouseenter", () => {
+    if (el.dataset.noGlitch === "1") return;
     if (!labelEl) return;
     stopLabelGlitch(el);
     labelEl.textContent = labelEl.dataset.original || labelEl.textContent;
   });
 
   bar.addEventListener("mouseleave", () => {
-    // ✅ 큰 화면일 땐 glitch 재시작 금지
+    if (el.dataset.noGlitch === "1") return;
     if (el.classList.contains("max")) return;
     startLabelGlitch(el);
-  });
+  })
 }
+
 
   el.addEventListener("dblclick", () => toggleMax(el));
   el.addEventListener("click", () => {
@@ -934,21 +1037,42 @@ function centerWindow(el) {
 let drag = null;
 
 function startDrag(e, el) {
-  if (el.classList.contains("max")) return; // ✅ max 상태에서는 드래그 막기
+  if (el.classList.contains("max")) return;
+
+  // 타이틀바 안의 +, x 버튼 누를 때는 드래그 시작 금지
+  if (e.target.closest(".controls")) return;
+
+  // 마우스는 좌클릭만
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+
   bringToFront(el);
-  if (e.button !== 0) return;
 
   const rect = el.getBoundingClientRect();
-  drag = { el, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+  drag = {
+    el,
+    pointerId: e.pointerId,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top
+  };
 
   el.dataset.free = "1";
 
-  window.addEventListener("mousemove", onDragMove);
-  window.addEventListener("mouseup", endDrag);
+  // 모바일에서 브라우저 제스처/스크롤 방지
+  e.preventDefault();
+
+  // 포인터 캡처 (가능한 브라우저에서)
+  if (el.setPointerCapture) {
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  window.addEventListener("pointermove", onDragMove, { passive: false });
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
 }
 
 function onDragMove(e) {
   if (!drag) return;
+  if (e.pointerId !== drag.pointerId) return;
 
   const el = drag.el;
   const x = e.clientX - drag.offsetX;
@@ -957,13 +1081,25 @@ function onDragMove(e) {
   const OUT = 300;
   el.style.left = clamp(x, -OUT, window.innerWidth + OUT - el.offsetWidth) + "px";
   el.style.top  = clamp(y, -OUT, window.innerHeight + OUT - el.offsetHeight) + "px";
+
+  e.preventDefault();
 }
 
-function endDrag() {
+function endDrag(e) {
+  if (!drag) return;
+  if (e && e.pointerId != null && e.pointerId !== drag.pointerId) return;
+
+  const el = drag.el;
+  if (el && el.releasePointerCapture && drag.pointerId != null) {
+    try { el.releasePointerCapture(drag.pointerId); } catch (_) {}
+  }
+
   drag = null;
-  window.removeEventListener("mousemove", onDragMove);
-  window.removeEventListener("mouseup", endDrag);
+  window.removeEventListener("pointermove", onDragMove);
+  window.removeEventListener("pointerup", endDrag);
+  window.removeEventListener("pointercancel", endDrag);
 }
+
 
 // -------------------- resize observe --------------------
 function watchFit(win) {
@@ -986,6 +1122,13 @@ function watchFit(win) {
   win._ro = ro;
 }
 
+document.getElementById("taskbar")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".taskbar-btn");
+  if (!btn) return;
+  const key = btn.dataset.panel;
+  togglePanel(key);
+});
+
 // -------------------- init --------------------
 const base = Math.floor((window.innerWidth * window.innerHeight) / 60000);
 for (let i = 0; i < base; i++) spawnRandomWindow();
@@ -1004,6 +1147,16 @@ window.addEventListener("resize", () => {
   delete w.dataset.aSize;
 
   fitSmallWindow(w);
+});
+
+panelWindows.forEach((w) => {
+  if (!w.isConnected) return;
+  if (window.innerWidth <= 768) {
+    w.style.width = "calc(100vw - 12px)";
+    w.style.height = "calc(100vh - 86px)";
+    w.style.left = "6px";
+    w.style.top = "8px";
+  }
 });
 });
 
@@ -1029,3 +1182,4 @@ function spawnBurst() {
 spawnTimer = setInterval(spawnBurst, SPAWN_EVERY_MS);
 
 startScoreIdleTimer();
+updateFindPanel();
