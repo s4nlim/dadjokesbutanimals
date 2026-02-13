@@ -294,10 +294,17 @@ body { font-family: "Inter", sans-serif; }
   }
 
   .win.info-win{
-    width: calc(100vw - 12px) !important;
-    height: calc(100vh - 86px) !important;
-    left: 6px !important;
-    top: 8px !important;
+    /* JS가 계산한 크기/위치를 쓰게 함 */
+    width: auto;
+    height: auto;
+    left: auto;
+    top: auto;
+
+    /* 안전 캡만 둠 */
+    max-width: calc(100vw - 12px);
+    max-height: calc(100vh - 86px);
+    min-width: 220px;
+    min-height: 110px;
   }
 
   .win.info-win .content{

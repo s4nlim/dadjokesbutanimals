@@ -266,7 +266,7 @@ function fitPanelWindow(win) {
   let w = clamp(win.offsetWidth || (window.innerWidth <= 768 ? 260 : 620), MIN_W, MAX_W);
   win.style.width = w + "px";
 
-  // 2) 높이가 너무 크면 폭을 넓혀서 줄바꿈 줄임
+  // 2) 높이가 너무 크면 폭을 넓혀 줄바꿈 줄이기
   let guard = 20;
   while (guard-- > 0) {
     const { needH } = measureNeed(win);
@@ -278,7 +278,7 @@ function fitPanelWindow(win) {
     win.style.width = w + "px";
   }
 
-  // 3) 반대로 너무 넓으면 가능한 만큼 줄여서 "텍스트에 맞는 크기"로
+  // 3) 너무 넓으면 줄여서 텍스트에 맞게
   guard = 20;
   while (guard-- > 0) {
     const nextW = w - BUMP;
@@ -288,7 +288,7 @@ function fitPanelWindow(win) {
     const { needH } = measureNeed(win);
 
     if (needH > MAX_H) {
-      win.style.width = w + "px"; // 직전이 최적
+      win.style.width = w + "px";
       break;
     }
 
@@ -303,41 +303,6 @@ function fitPanelWindow(win) {
   keepWindowInViewport(win);
 }
 
-
-
-function fitPanelWindow(win) {
-  if (win.dataset.type !== "panel") return;
-  if (win.classList.contains("max")) return;
-
-  const content = win.querySelector(".content");
-  if (!content) return;
-
-  const { MIN_W, MAX_W, MIN_H, MAX_H, BUMP } = getPanelProfile();
-
-  // 시작 폭
-  let w = clamp(win.offsetWidth || 620, MIN_W, MAX_W);
-  win.style.width = w + "px";
-
-  // 높이가 cap 넘으면 폭을 넓혀 줄바꿈 줄이기
-  let guard = 18;
-  while (guard-- > 0) {
-    const { needH } = measureNeed(win);
-    if (needH <= MAX_H || w >= MAX_W) {
-      win.style.height = clamp(needH, MIN_H, MAX_H) + "px";
-      break;
-    }
-    w = Math.min(MAX_W, w + BUMP);
-    win.style.width = w + "px";
-  }
-
-  syncContentBox(win);
-
-  // cap 걸리면 내용만 스크롤
-  content.style.overflowY =
-    content.scrollHeight > content.clientHeight + 1 ? "auto" : "hidden";
-
-  keepWindowInViewport(win);
-}
 
 function placePanelWindow(el) {
   // append 이후 호출되어야 실측 가능
@@ -1092,66 +1057,70 @@ function spawnRandomWindow() {
 
 // -------------------- behavior wiring --------------------
 function wireWindow(el) {
+  const isPanel = el.dataset.type === "panel";
+
   el.addEventListener("pointerdown", () => bringToFront(el));
 
   const maxBtn = el.querySelector(".btn-max");
   if (maxBtn) {
     maxBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      if (isPanel) return;          // ✅ panel maximize 차단
       toggleMax(el);
     });
   }
 
   const closeBtn = el.querySelector(".btn-close");
-if (closeBtn) {
-  closeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
 
-    if (el.dataset.countClose !== "0") {
-      bumpCloseCount();
-    }
+      if (el.dataset.countClose !== "0") {
+        bumpCloseCount();
+      }
 
-    stopLabelGlitch(el);
+      stopLabelGlitch(el);
 
-    const panelKey = el.dataset.panelKey;
-    el.remove();
+      const panelKey = el.dataset.panelKey;
+      el.remove();
 
-    if (panelKey) {
-      panelWindows.delete(panelKey);
-      setTaskButtonActive(panelKey, false);
-    }
+      if (panelKey) {
+        panelWindows.delete(panelKey);
+        setTaskButtonActive(panelKey, false);
+      }
 
-    updateFindPanel(); // ✅ 창 닫힌 뒤도 반영
-  });
-}
-
+      updateFindPanel();
+    });
+  }
 
   const bar = el.querySelector(".bar");
   const labelEl = el.querySelector(".label");
 
   if (bar) {
-  bar.addEventListener("pointerdown", (e) => startDrag(e, el));
+    bar.addEventListener("pointerdown", (e) => startDrag(e, el));
 
-  bar.addEventListener("mouseenter", () => {
-    if (el.dataset.noGlitch === "1") return;
-    if (!labelEl) return;
-    stopLabelGlitch(el);
-    labelEl.textContent = labelEl.dataset.original || labelEl.textContent;
-  });
+    bar.addEventListener("mouseenter", () => {
+      if (el.dataset.noGlitch === "1") return;
+      if (!labelEl) return;
+      stopLabelGlitch(el);
+      labelEl.textContent = labelEl.dataset.original || labelEl.textContent;
+    });
 
-  bar.addEventListener("mouseleave", () => {
-    if (el.dataset.noGlitch === "1") return;
-    if (el.classList.contains("max")) return;
-    startLabelGlitch(el);
-  })
-}
+    bar.addEventListener("mouseleave", () => {
+      if (el.dataset.noGlitch === "1") return;
+      if (el.classList.contains("max")) return;
+      startLabelGlitch(el);
+    });
+  }
 
-
-  el.addEventListener("dblclick", () => toggleMax(el));
-  el.addEventListener("click", () => {
-    if (!maximizeMode) return;
-    toggleMax(el, true);
-  });
+  // ✅ panel은 dblclick/click maximize 이벤트 자체를 달지 않음
+  if (!isPanel) {
+    el.addEventListener("dblclick", () => toggleMax(el));
+    el.addEventListener("click", () => {
+      if (!maximizeMode) return;
+      toggleMax(el, true);
+    });
+  }
 }
 
 
