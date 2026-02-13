@@ -258,7 +258,7 @@ body { font-family: "Inter", sans-serif; }
   margin: 0 0 10px;
   font-size: 18px;
   font-weight: 600;
-  max-width: 45ch;
+  max-width: 62ch;
 }
 
 .info-content h3{
@@ -294,26 +294,17 @@ body { font-family: "Inter", sans-serif; }
   }
 
   .win.info-win{
-    /* JS가 계산한 크기/위치를 쓰게 함 */
-    width: auto;
-    height: auto;
-    left: auto;
-    top: auto;
-
-    /* 안전 캡만 둠 */
-    max-width: calc(100vw - 12px);
-    max-height: calc(100vh - 86px);
-    min-width: 220px;
-    min-height: 110px;
+    width: min(92vw, 430px) !important;
+    height: auto !important;
+    max-height: calc(100vh - 92px);
   }
 
   .win.info-win .content{
-    padding: 16px 14px 20px;
+    padding: 16px 14px 14px;
   }
 
-  .info-content h2{ font-size: 28px; }
   .info-content p,
-  .info-content li{ font-size: 16px; }
+  .info-content li{ font-size: 16px; max-width: none; }
 }
 
 /* Keycaps (+, ×) */
