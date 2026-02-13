@@ -400,6 +400,28 @@ function togglePanel(key) {
 
 // -------------------- helpers --------------------
 
+function isTouchUI() {
+  return window.matchMedia("(hover: none), (pointer: coarse)").matches;
+}
+
+function showOriginalLabelBriefly(win, ms = 1200) {
+  if (!win || win.dataset.noGlitch === "1") return; // ABOUT/HELP/FIND 제외
+  const labelEl = win.querySelector(".label");
+  if (!labelEl) return;
+
+  const original = labelEl.dataset.original || labelEl.textContent || "";
+  stopLabelGlitch(win);
+  labelEl.textContent = original;
+
+  clearTimeout(win._labelPeekTimer);
+  win._labelPeekTimer = setTimeout(() => {
+    if (!win.isConnected) return;
+    if (win.classList.contains("max")) return; // max 상태는 원래 라벨 유지
+    startLabelGlitch(win);
+  }, ms);
+}
+
+
 const GLITCH_CHARS = "∆∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏√∫µɆɎÐÞŁØÆŒßĦ░▒▓";
 
 function makeGlitchLabel(min = 6, max = 10) {
@@ -529,9 +551,14 @@ function startLabelGlitch(win) {
 
 
 function stopLabelGlitch(win) {
-  if (!win?._labelGlitchTimers) return;
-  win._labelGlitchTimers.forEach((id) => clearTimeout(id));
-  win._labelGlitchTimers = null;
+  if (win?._labelGlitchTimers) {
+    win._labelGlitchTimers.forEach((id) => clearTimeout(id));
+    win._labelGlitchTimers = null;
+  }
+  if (win?._labelPeekTimer) {
+    clearTimeout(win._labelPeekTimer);
+    win._labelPeekTimer = null;
+  }
 }
 
 
@@ -1097,7 +1124,13 @@ function wireWindow(el) {
   const labelEl = el.querySelector(".label");
 
   if (bar) {
-    bar.addEventListener("pointerdown", (e) => startDrag(e, el));
+    bar.addEventListener("pointerdown", (e) => {
+  // 모바일/터치 환경: 탭 바 터치 시 원래 라벨 잠깐 표시
+  if (isTouchUI() && !e.target.closest(".controls")) {
+    showOriginalLabelBriefly(el, 1200);
+  }
+  startDrag(e, el);
+});
 
     bar.addEventListener("mouseenter", () => {
       if (el.dataset.noGlitch === "1") return;
