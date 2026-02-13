@@ -450,7 +450,7 @@ function randGlitchChar() {
 }
 
 const BLACKOUT_LINES = [
-  "You've deleted 100 tabs.,",
+  "You've deleted 20 tabs.,",
   "Well...too bad...",
   "I think you don't like dad jokes.",
   "Get OFF of my site."
