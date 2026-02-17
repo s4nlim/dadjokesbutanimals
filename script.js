@@ -624,6 +624,31 @@ const warningSfxPool = WARNING_SFX_SRCS.map((src) => {
   return a;
 });
 
+// ===== tab close SFX =====
+const CLOSE_SFX_SRC = "audio/delete.mp3"; // <-- 네 mp3 경로로 변경
+const CLOSE_SFX_POOL_SIZE = 8;
+const closeSfxPool = Array.from({ length: CLOSE_SFX_POOL_SIZE }, () => {
+  const a = new Audio(CLOSE_SFX_SRC);
+  a.preload = "auto";
+  a.volume = 0.8;
+  return a;
+});
+let closeSfxCursor = 0;
+
+function playCloseSfx() {
+  const a = closeSfxPool[closeSfxCursor];
+  closeSfxCursor = (closeSfxCursor + 1) % closeSfxPool.length;
+  if (!a) return;
+
+  try {
+    a.pause();
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch {}
+}
+
+
 // 기존 beep(oscillator)도 fallback으로 유지하고 싶으면 그대로 두고,
 // mp3 재생 함수만 새로 추가
 function playWarningSfx(stepIdx = 0) {
@@ -654,23 +679,29 @@ function ensureWarningAudio() {
   return warningAudioCtx;
 }
 
-// 첫 사용자 제스처에서 오디오 unlock
 function unlockWarningAudioOnce() {
   ensureWarningAudio();
 
-  // iOS/모바일에서 오디오 unlock + preload
   warningSfxPool.forEach((a) => {
-    a.play()
-      .then(() => {
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+    }).catch(() => {});
+  });
+
+  if (Array.isArray(closeSfxPool)) {
+    closeSfxPool.forEach((a) => {
+      a.play().then(() => {
         a.pause();
         a.currentTime = 0;
-      })
-      .catch(() => {});
-  });
+      }).catch(() => {});
+    });
+  }
 
   window.removeEventListener("pointerdown", unlockWarningAudioOnce);
   window.removeEventListener("keydown", unlockWarningAudioOnce);
 }
+
 
 window.addEventListener("pointerdown", unlockWarningAudioOnce, { once: true });
 window.addEventListener("keydown", unlockWarningAudioOnce, { once: true });
@@ -1551,6 +1582,8 @@ function wireWindow(el) {
   if (closeBtn) {
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      
+      playCloseSfx();
 
       if (el.dataset.countClose !== "0") {
         bumpCloseCount();
