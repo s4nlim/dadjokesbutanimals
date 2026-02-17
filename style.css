@@ -1,30 +1,40 @@
-/* --- base --- */
+
 * { box-sizing: border-box; }
 
+/* --- base --- */
 html, body {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
-  margin: 0;
-  /* iOS 상단 안전영역(노치/상단바)에도 같은 배경이 보이게 */
-  background: url("imgs/bg.jpg") center / cover no-repeat;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  background: #6ea4ff;
+}
+
+html {
+  background: url("imgs/bg.jpg") center / cover no-repeat fixed;
 }
 
 body {
   font-family: "Inter", sans-serif;
-  overflow: hidden;
+  background: transparent;
 }
 
-/* --- desktop --- */
-.desktop {
-  cursor: url("imgs/cursor.png") 0 0, auto;
-  position: fixed;   /* relative -> fixed */
-  inset: 0;          /* top/right/bottom/left 0 */
+
+/* 기존 desktop */
+.desktop{
+  position: fixed;
+  inset: 0;
   width: 100%;
-  height: 100dvh;    /* 모바일 동적 viewport 대응 */
-  min-height: 100svh;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
-  background: transparent; /* 배경은 html/body가 담당 */
+  background: transparent;
+  cursor: url("imgs/cursor.png") 0 0, auto;
 }
+
 
 /* --- window --- */
 .win{
