@@ -142,6 +142,33 @@ const IMAGES = [
   { label: "QUOKA", src: "imgs/quoka.gif" },
   { label: "SNAIL", src: "imgs/snail.jpg" },
   { label: "DOG", src: "imgs/dog1.jpg" },
+  { label: "ELEPHANT", src: "imgs/elephant1.gif" },
+  { label: "ELEPHANT", src: "imgs/elephant2.gif" },
+  { label: "CRAB", src: "imgs/crab.gif" },
+  { label: "KOALA", src: "imgs/koala.gif" },
+  { label: "CAMEL", src: "imgs/camel.gif" },
+  { label: "FERRET", src: "imgs/ferret.gif" },
+  { label: "RED PANDA", src: "imgs/redpanda.gif" },
+  { label: "HIPPOPOTAMUS", src: "imgs/hippo.gif" },
+  { label: "KANGAROO", src: "imgs/kangaroo.gif" },
+  { label: "HEDGEHOG", src: "imgs/hedgehog1.gif" },
+  { label: "HEDGEHOG", src: "imgs/hedgehog2.gif" },
+  { label: "OWL", src: "imgs/owl.gif" },
+  { label: "OTTER", src: "imgs/otter.gif" },
+  { label: "RACCOON", src: "imgs/raccoon.gif" },
+  { label: "POLAR BEAR", src: "imgs/polarbear.gif" },
+  { label: "COCKATOO", src: "imgs/cockatoo.gif" },
+  { label: "MIRKET", src: "imgs/mirket.gif" },
+  { label: "HAMSTER", src: "imgs/hamster.gif" },
+  { label: "KOZEL", src: "imgs/kozel.gif" },
+  { label: "PELICAN", src: "imgs/pelican.gif" }, 
+  { label: "HORSE", src: "imgs/horse1.gif" }, 
+  { label: "HORSE", src: "imgs/horse2.gif" },
+  { label: "TIGER", src: "imgs/tiger1.gif" }, 
+  { label: "TIGER", src: "imgs/tiger2.gif" },  
+  { label: "AXOLOTL", src: "imgs/axolotl.gif" },
+  { label: "ORCA", src: "imgs/orca.gif" },
+  { label: "DOLPHIN", src: "imgs/dolphin.gif" },
 ];
 
 const closeCountEl = document.getElementById("closeCount");
@@ -245,7 +272,7 @@ const PANEL_CONTENT = {
           <p>Drag tabs by the blue bar</p>
           <p><strong>+</strong> expands a tab</p>
           <p><strong>×</strong> closes a tab</p>
-          <p>TRY DELETING AS MANY AS YOU CAN</p>
+          <p>I dare you to not close tabs</p>
       </div>
     `
   },
