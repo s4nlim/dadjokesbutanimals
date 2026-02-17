@@ -1921,7 +1921,7 @@ function isMobileView() {
 }
 
 function getSpawnEveryMs() {
-  return isMobileView() ? 1500 : 1000; // 모바일 2초, 데스크탑 1초
+  return isMobileView() ? 1800 : 1004; // 모바일 1.8초, 데스크탑 1초
 }
 
 function spawnBurst() {
