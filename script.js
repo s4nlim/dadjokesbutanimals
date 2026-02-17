@@ -437,7 +437,39 @@ function showOriginalLabelBriefly(win, ms = 1200) {
 }
 
 
-const GLITCH_CHARS = "∆∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏√∫µɆɎÐÞŁØÆŒßĦ░▒▓";
+const GLITCH_CHARS = "∆∏‡‽∂Ω¶ÚÆœªø░▒▓█çßƒ©∑∏╳∫µɆƔ╬ɎÐÞŁØÆŒßĦ░▒▓";
+
+const GLITCH_CFG = {
+  // 기본 글리치 강도 (낮출수록 동물 이름이 더 잘 보임)
+  baseIntensity: 0.22,
+
+  // "이름이 또렷하게 보이는 순간" 직후에 섞이는 강도
+  flashIntensity: 0.10,
+
+  // 프레임 갱신 속도
+  tickMin: 180,
+  tickMax: 320,
+
+  // 원래 이름을 완전히 보여주는 간격
+  flashGapMin: 1900,
+  flashGapMax: 3400,
+
+  // 원래 이름을 유지하는 시간
+  flashHoldMs: 260
+};
+
+function glitchFrameFromOriginal(original, intensity = GLITCH_CFG.baseIntensity) {
+  const out = [];
+  for (const ch of original) {
+    if (ch === " ") {
+      out.push(" ");
+      continue;
+    }
+    out.push(Math.random() < intensity ? randGlitchChar() : ch);
+  }
+  return out.join("");
+}
+
 
 function makeGlitchLabel(min = 6, max = 10) {
   const len = randInt(min, max);
@@ -533,48 +565,90 @@ function startLabelGlitch(win) {
   const labelEl = win.querySelector(".label");
   if (!labelEl) return;
 
-  // ✅ original 없으면 현재 텍스트를 original로 저장
   if (!labelEl.dataset.original) {
-    labelEl.dataset.original = labelEl.textContent || "";
+    labelEl.dataset.original = (labelEl.textContent || "").trim();
   }
 
-  // 이미 실행 중이면 중복 방지
   stopLabelGlitch(win);
 
-  const len = randInt(6, 11);
-  const chars = Array.from({ length: len }, () => randGlitchChar());
-  labelEl.textContent = chars.join("");
+  const original = labelEl.dataset.original || "";
+  if (!original) return;
 
-  const timers = [];
+  // 1) 평소엔 원문 + 글리치가 섞여 보이게
+  const tick = () => {
+    if (!win.isConnected) return;
+    if (win.classList.contains("max")) return;
 
-  const scheduleChar = (i) => {
-    const tick = () => {
-      if (!win.isConnected) return;
-      chars[i] = randGlitchChar();
-      labelEl.textContent = chars.join("");
-      timers[i] = setTimeout(tick, randInt(900, 2000));
-    };
-    timers[i] = setTimeout(tick, randInt(900, 1000));
+    labelEl.textContent = glitchFrameFromOriginal(original, GLITCH_CFG.baseIntensity);
+    win._labelGlitchTimer = setTimeout(
+      tick,
+      randInt(GLITCH_CFG.tickMin, GLITCH_CFG.tickMax)
+    );
   };
 
-  for (let i = 0; i < chars.length; i++) {
-    scheduleChar(i);
-  }
+  // 2) 가끔 원래 동물 이름을 잠깐 또렷하게 보여주기
+  const flashOriginal = () => {
+    if (!win.isConnected) return;
+    if (win.classList.contains("max")) return;
 
-  win._labelGlitchTimers = timers;
+    labelEl.textContent = original;
+
+    win._labelFlashHold = setTimeout(() => {
+      if (!win.isConnected) return;
+      if (win.classList.contains("max")) return;
+
+      labelEl.textContent = glitchFrameFromOriginal(original, GLITCH_CFG.flashIntensity);
+
+      win._labelFlashTimer = setTimeout(
+        flashOriginal,
+        randInt(GLITCH_CFG.flashGapMin, GLITCH_CFG.flashGapMax)
+      );
+    }, GLITCH_CFG.flashHoldMs);
+  };
+
+  // 시작 프레임
+  labelEl.textContent = glitchFrameFromOriginal(original, GLITCH_CFG.flashIntensity);
+
+  win._labelGlitchTimer = setTimeout(
+    tick,
+    randInt(GLITCH_CFG.tickMin, GLITCH_CFG.tickMax)
+  );
+
+  win._labelFlashTimer = setTimeout(
+    flashOriginal,
+    randInt(GLITCH_CFG.flashGapMin, GLITCH_CFG.flashGapMax)
+  );
 }
 
 
 function stopLabelGlitch(win) {
+  // 이전 버전 호환(기존 배열 타이머 정리)
   if (win?._labelGlitchTimers) {
     win._labelGlitchTimers.forEach((id) => clearTimeout(id));
     win._labelGlitchTimers = null;
   }
+
+  if (win?._labelGlitchTimer) {
+    clearTimeout(win._labelGlitchTimer);
+    win._labelGlitchTimer = null;
+  }
+
+  if (win?._labelFlashTimer) {
+    clearTimeout(win._labelFlashTimer);
+    win._labelFlashTimer = null;
+  }
+
+  if (win?._labelFlashHold) {
+    clearTimeout(win._labelFlashHold);
+    win._labelFlashHold = null;
+  }
+
   if (win?._labelPeekTimer) {
     clearTimeout(win._labelPeekTimer);
     win._labelPeekTimer = null;
   }
 }
+
 
 
 function randInt(min, max) {
