@@ -148,43 +148,66 @@ const closeCountEl = document.getElementById("closeCount");
 const closeMeter = document.getElementById("closeMeter");
 let closeAttempts = 0;
 
-// 3초 동안 close 액션 없으면 숨김
-const SCORE_IDLE_MS = 3000;
+// ---- global runtime states (missing) ----
+let spawnTimer = null;
+let isBlackout = false;
+
+const SCORE_IDLE_MS = 2600;
 let scoreIdleTimer = null;
 
-function startScoreIdleTimer() {
-  clearTimeout(scoreIdleTimer);
-  scoreIdleTimer = setTimeout(() => {
-    if (closeMeter) closeMeter.classList.add("is-faded");
-  }, SCORE_IDLE_MS);
-}
-
-const TAB_CLOSE_LIMIT = 20;
-let isBlackout = false;
-let spawnTimer = null; // setInterval id 보관
-
-
-
 function showScoreMeter() {
-  if (closeMeter) closeMeter.classList.remove("is-faded");
+  if (!closeMeter) return;
+  closeMeter.classList.remove("is-faded");
   startScoreIdleTimer();
 }
 
-function bumpCloseCount() {
-  if (isBlackout) return;
+// --- warning milestone system ---
+const WARNING_MILESTONES = [25, 50, 75, 100];
+const warnedMilestones = new Set();
+const WARNING_STEP_DELAY = 900; // 각 경고 탭 등장 간격(ms)
 
+// --- warning spawn lock ---
+let warningSpawnLock = false;    // 경고 시퀀스/경고창이 있을 때 true
+let warningSequencePending = 0;  // 아직 생성 예정인 warning step 개수
+
+function getOpenWarningCount() {
+  return document.querySelectorAll(".win.warning-win").length;
+}
+
+function refreshWarningSpawnLock() {
+  warningSpawnLock =
+    warningSequencePending > 0 || getOpenWarningCount() > 0;
+}
+
+function isWarningLockActive() {
+  return warningSpawnLock;
+}
+
+function startScoreIdleTimer() {
+  if (!closeMeter) return;
+  clearTimeout(scoreIdleTimer);
+  scoreIdleTimer = setTimeout(() => {
+    closeMeter.classList.add("is-faded");
+  }, SCORE_IDLE_MS);
+}
+
+
+let topOrder = 1; // 추가
+
+function bumpCloseCount() {
   closeAttempts += 1;
   if (closeCountEl) closeCountEl.textContent = closeAttempts;
   showScoreMeter();
+  updateFindPanel?.();
 
-  updateFindPanel(); // ✅ FIND 실시간 반영
-
-  if (closeAttempts >= TAB_CLOSE_LIMIT) {
-    triggerBlackout();
+  if (
+    WARNING_MILESTONES.includes(closeAttempts) &&
+    !warnedMilestones.has(closeAttempts)
+  ) {
+    warnedMilestones.add(closeAttempts);
+    runWarningSequence(closeAttempts);
   }
 }
-
-let topOrder = 1; // 추가
 
 /* ===== taskbar panel windows ===== */
 const panelWindows = new Map();
@@ -559,6 +582,296 @@ function triggerBlackout() {
     }, i * 1000); // 줄 간격 속도(ms)
   });
 }
+
+let warningAudioCtx = null;
+
+// ===== MP3 warning SFX =====
+const WARNING_SFX_SRCS = [
+  "audio/warning.mp3",
+];
+
+const warningSfxPool = WARNING_SFX_SRCS.map((src) => {
+  const a = new Audio(src);
+  a.preload = "auto";
+  a.volume = 0.9;
+  return a;
+});
+
+// 기존 beep(oscillator)도 fallback으로 유지하고 싶으면 그대로 두고,
+// mp3 재생 함수만 새로 추가
+function playWarningSfx(stepIdx = 0) {
+  const i = Math.min(stepIdx, warningSfxPool.length - 1);
+  const a = warningSfxPool[i];
+  if (!a) {
+    playWarningTone(stepIdx); // fallback
+    return;
+  }
+
+  try {
+    a.pause();
+    a.currentTime = 0;
+    a.play().catch(() => {
+      // 모바일 자동재생 제한 걸리면 기존 톤으로 fallback
+      playWarningTone(stepIdx);
+    });
+  } catch {
+    playWarningTone(stepIdx);
+  }
+}
+
+function ensureWarningAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!warningAudioCtx) warningAudioCtx = new AC();
+  if (warningAudioCtx.state === "suspended") warningAudioCtx.resume();
+  return warningAudioCtx;
+}
+
+// 첫 사용자 제스처에서 오디오 unlock
+function unlockWarningAudioOnce() {
+  ensureWarningAudio();
+
+  // iOS/모바일에서 오디오 unlock + preload
+  warningSfxPool.forEach((a) => {
+    a.play()
+      .then(() => {
+        a.pause();
+        a.currentTime = 0;
+      })
+      .catch(() => {});
+  });
+
+  window.removeEventListener("pointerdown", unlockWarningAudioOnce);
+  window.removeEventListener("keydown", unlockWarningAudioOnce);
+}
+
+window.addEventListener("pointerdown", unlockWarningAudioOnce, { once: true });
+window.addEventListener("keydown", unlockWarningAudioOnce, { once: true });
+
+function playWarningTone(stepIdx = 0) {
+  const ctx = ensureWarningAudio();
+  if (!ctx) return;
+
+  // 위->아래 순서로 약간 내려가는 경고음 느낌
+  const freqs = [980, 760, 620];
+  const f = freqs[Math.min(stepIdx, freqs.length - 1)];
+  const now = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = "square";
+  osc.frequency.setValueAtTime(f, now);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.13, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.23);
+}
+
+function createWarningWindow(message, stepIdx = 0) {
+  const el = document.createElement("section");
+  el.className = "win warning-win";
+  el.dataset.type = "warning";
+  el.dataset.noGlitch = "1";
+  el.dataset.countClose = "0";
+
+  el.innerHTML = `
+    <div class="bar">
+      <div class="label">WARNING</div>
+      <div class="controls">
+        <button class="btn-close" title="close">×</button>
+      </div>
+    </div>
+    <div class="content">
+      <p class="warning-text"></p>
+    </div>
+  `;
+
+  const p = el.querySelector(".warning-text");
+
+  if (stepIdx === 2) {
+    // 마지막 문구만 DON'T / LIKE에서 줄바꿈
+    p.innerHTML = message.replace("DON'T LIKE", "DON'T<br>LIKE");
+  } else {
+    p.textContent = message;
+  }
+
+  wireWindow(el);
+  return el;
+}
+
+
+
+// --- warning placement config (여기 숫자 바꿔서 위치 조절) ---
+const WARNING_POS = {
+  desktop: [
+    { x: 0.20, y: 0.20 }, // 1번째 경고
+    { x: 0.50, y: 0.48 }, // 2번째 경고
+    { x: 0.80, y: 0.70 }, // 3번째 경고
+  ],
+  mobile: [
+    { x: 0.40, y: 0.28 },
+    { x: 0.50, y: 0.48 },
+    { x: 0.60, y: 0.66 },
+  ],
+  pad: 8,
+  jitterXDesktop: 20, // 데스크탑에서 좌우 랜덤 흔들림
+  jitterYDesktop: 8,  // 데스크탑에서 상하 랜덤 흔들림
+};
+
+
+function placeWarningWindow(el, stepIdx = 0) {
+  const taskbarH = getTaskbarHeight();
+  const usableH = window.innerHeight - taskbarH;
+
+  const mobile = window.innerWidth <= 768;
+  const slots = mobile ? WARNING_POS.mobile : WARNING_POS.desktop;
+  const slot = slots[Math.min(stepIdx, slots.length - 1)];
+
+  const pad = WARNING_POS.pad ?? 8;
+  const jitterX = mobile ? 0 : randInt(-WARNING_POS.jitterXDesktop, WARNING_POS.jitterXDesktop);
+  const jitterY = mobile ? 0 : randInt(-WARNING_POS.jitterYDesktop, WARNING_POS.jitterYDesktop);
+
+  // x,y는 0~1 비율값
+  const baseLeft = Math.round((window.innerWidth - el.offsetWidth) * slot.x);
+  const baseTop = Math.round((usableH - el.offsetHeight) * slot.y);
+
+  el.style.left =
+    clamp(baseLeft + jitterX, pad, window.innerWidth - el.offsetWidth - pad) + "px";
+  el.style.top =
+    clamp(baseTop + jitterY, pad, usableH - el.offsetHeight - pad) + "px";
+}
+
+
+function runWarningSequence(countValue) {
+  const lines = [
+    `YOU'VE DELETED ${countValue} TABS`,
+    "WELL... TOO BAD...",
+    "I GUESS YOU DON'T LIKE DAD JOKES"
+  ];
+
+  const shared = getWarningFontPx();
+
+lines.forEach((text, idx) => {
+  setTimeout(() => {
+    const w = createWarningWindow(text, idx);   // idx 전달
+    desktop.appendChild(w);
+
+    fitWarningWindow(w, idx, shared);           // idx + sharedFont 전달
+    placeWarningWindow(w, idx);
+    bringToFront(w);
+
+    playWarningSfx(idx);
+
+    warningSequencePending = Math.max(0, warningSequencePending - 1);
+    refreshWarningSpawnLock();
+  }, idx * WARNING_STEP_DELAY);
+});
+
+}
+
+function getWarningFontPx() {
+  // 한 시퀀스에서 3개 모두 동일 폰트
+  return window.innerWidth <= 768 ? 40 : 88;
+}
+
+// 텍스트(줄별) 실제 폭 측정
+function measureWarningTextWidthPx(textEl) {
+  const cs = getComputedStyle(textEl);
+  const lines = textEl.innerText
+    .split("\n")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const probe = document.createElement("span");
+  probe.style.position = "fixed";
+  probe.style.left = "-99999px";
+  probe.style.top = "0";
+  probe.style.visibility = "hidden";
+  probe.style.whiteSpace = "nowrap";
+  probe.style.fontFamily = cs.fontFamily;
+  probe.style.fontWeight = cs.fontWeight;
+  probe.style.fontSize = cs.fontSize;
+  probe.style.letterSpacing = cs.letterSpacing;
+  probe.style.lineHeight = cs.lineHeight;
+  probe.style.textTransform = cs.textTransform;
+  document.body.appendChild(probe);
+
+  let max = 0;
+  for (const line of lines) {
+    probe.textContent = line;
+    max = Math.max(max, Math.ceil(probe.getBoundingClientRect().width));
+  }
+
+  probe.remove();
+  return max;
+}
+
+function fitWarningWindow(win, stepIdx = 0, sharedFontPx = getWarningFontPx()) {
+  const bar = win.querySelector(".bar");
+  const content = win.querySelector(".content");
+  const textEl = win.querySelector(".warning-text");
+  if (!bar || !content || !textEl) return;
+
+  const mobile = window.innerWidth <= 768;
+  const forceOneLine = stepIdx <= 1; // 첫 2개 한 줄
+
+  // minW 너무 크면 오른쪽 여백 커 보일 수 있어서 살짝 낮춤
+  const minW = mobile ? 180 : 220;
+  const maxW = Math.floor(window.innerWidth * (mobile ? 0.96 : 0.92));
+  const maxH = Math.floor((window.innerHeight - getTaskbarHeight()) * (mobile ? 0.82 : 0.9));
+
+  if (forceOneLine) {
+    textEl.style.whiteSpace = "nowrap";
+  } else {
+    textEl.style.whiteSpace = "normal";
+    textEl.style.textWrap = "balance";
+  }
+
+  // 리셋
+  win.style.width = "auto";
+  win.style.height = "auto";
+
+  const csWin = getComputedStyle(win);
+  const borderX =
+    (parseFloat(csWin.borderLeftWidth) || 0) + (parseFloat(csWin.borderRightWidth) || 0);
+  const borderY =
+    (parseFloat(csWin.borderTopWidth) || 0) + (parseFloat(csWin.borderBottomWidth) || 0);
+
+  const csContent = getComputedStyle(content);
+  const padX =
+    (parseFloat(csContent.paddingLeft) || 0) + (parseFloat(csContent.paddingRight) || 0);
+
+  // ✅ 핵심: stepIdx 상관없이 텍스트 실폭 기준
+  const textW = measureWarningTextWidthPx(textEl);
+  let outerW = clamp(textW + padX + borderX + 6, minW, maxW); // +6은 subpixel 여유
+  win.style.width = outerW + "px";
+
+  // 높이 맞춤 (폰트는 절대 안 줄임)
+  let guard = 40;
+  while (guard-- > 0) {
+    const needH = Math.ceil(bar.offsetHeight + borderY + content.scrollHeight);
+    if (needH <= maxH) {
+      win.style.height = needH + "px";
+      break;
+    }
+    if (outerW < maxW) {
+      outerW = Math.min(maxW, outerW + 16);
+      win.style.width = outerW + "px";
+      continue;
+    }
+    win.style.height = maxH + "px";
+    break;
+  }
+
+  syncContentBox(win);
+}
+
+
 
 
 function startLabelGlitch(win) {
@@ -1227,7 +1540,13 @@ function wireWindow(el) {
       }
 
       updateFindPanel();
-    });
+
+      if (el.dataset.type === "warning" || el.classList.contains("warning-win")) {
+      refreshWarningSpawnLock();
+    }
+
+  });
+    
   }
 
   const bar = el.querySelector(".bar");
@@ -1522,6 +1841,13 @@ panelWindows.forEach((w) => {
   fitPanelWindow(w);
 });
 
+const sharedWarningFont = getWarningFontPx();
+document.querySelectorAll(".win.warning-win").forEach((w) => {
+  const step = Number(w.dataset.warningStep || 0);
+  fitWarningWindow(w, step, sharedWarningFont);
+  placeWarningWindow(w, step);
+});
+
 });
 
 // auto spawn settings
@@ -1539,6 +1865,7 @@ function getSpawnEveryMs() {
 }
 
 function spawnBurst() {
+  if (isWarningLockActive()) return;
   if (isPanelReadLockActive()) return; // <- 추가
 
   const current = document.querySelectorAll(".win").length;
