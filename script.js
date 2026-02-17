@@ -189,6 +189,20 @@ let topOrder = 1; // 추가
 /* ===== taskbar panel windows ===== */
 const panelWindows = new Map();
 
+// About/Help/Find 열었을 때 잠깐 읽기 보호 (자동 팝업 일시정지)
+const PANEL_READ_MS = 5000;   // 최소 5초 읽기 시간
+let panelReadableUntil = 0;
+
+function holdPanelsReadable(ms = PANEL_READ_MS) {
+  panelReadableUntil = Math.max(panelReadableUntil, Date.now() + ms);
+}
+
+function isPanelReadLockActive() {
+  // 패널이 실제로 열려 있고, 보호시간 안이면 true
+  return panelWindows.size > 0 && Date.now() < panelReadableUntil;
+}
+
+
 const PANEL_CONTENT = {
   about: {
   label: "ABOUT THIS PAGE",
@@ -385,6 +399,7 @@ function togglePanel(key) {
 
   panelWindows.set(key, el);
   setTaskButtonActive(key, true);
+  holdPanelsReadable(); // 패널 열면 일정 시간 읽기 보호
 
   if (document.fonts?.ready) {
     document.fonts.ready.then(() => {
@@ -1450,16 +1465,19 @@ function getSpawnEveryMs() {
 }
 
 function spawnBurst() {
+  if (isPanelReadLockActive()) return; // <- 추가
+
   const current = document.querySelectorAll(".win").length;
   if (current >= MAX_WINDOWS) return;
 
-  let count = randInt(SPAWN_MIN, SPAWN_MAX); // 현재는 항상 1개
+  let count = randInt(SPAWN_MIN, SPAWN_MAX);
   count = Math.min(count, MAX_WINDOWS - current);
 
   for (let i = 0; i < count; i++) {
     spawnRandomWindow();
   }
 }
+
 
 function restartSpawnTimer() {
   if (spawnTimer) clearInterval(spawnTimer);
