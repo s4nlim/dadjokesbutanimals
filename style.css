@@ -1,8 +1,18 @@
 /* --- base --- */
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
-body { font-family: "Inter", sans-serif; }
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;          /* 모바일 스크롤 차단 */
+  overscroll-behavior: none; /* bounce / pull-to-refresh 억제 */
+}
 
+body {
+  font-family: "Inter", sans-serif;
+  position: fixed;           /* 뷰포트 고정 */
+  inset: 0;
+  width: 100%;
+}
 
 
 /* --- desktop --- */

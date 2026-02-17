@@ -783,15 +783,35 @@ const CAP_H = () => {
 
 
 function pickTextSizes(win) {
-  if (win.dataset.qSize) return;
+  // 랜덤은 창 생성 시 1회만
+  if (win.dataset.qBase) return;
 
-  const { Q_RANGE, A_MULT } = getProfile();   // ✅ 추가
-  const q = randInt(Q_RANGE[0], Q_RANGE[1]);  // ✅ 수정
-  const a = Math.round(q * A_MULT);           // ✅ 수정
+  const qBase = randInt(24, 40); // 창별 고정 기본값
+  const aBase = Math.round(qBase * 1.2);
 
-  win.dataset.qSize = q;
-  win.dataset.aSize = a;
+  win.dataset.qBase = String(qBase);
+  win.dataset.aBase = String(aBase);
 }
+
+function getFluidScale() {
+  // 360 ~ 1600 사이에서 부드럽게 보간
+  const vw = clamp(window.innerWidth, 360, 1600);
+  const t = (vw - 360) / (1600 - 360); // 0~1
+  return 0.92 + t * (1.18 - 0.92);     // 0.92 ~ 1.18
+}
+
+function setFluidSizes(win) {
+  pickTextSizes(win);
+
+  const scale = getFluidScale();
+  const qSize = Math.round(parseInt(win.dataset.qBase, 10) * scale);
+  const aSize = Math.round(parseInt(win.dataset.aBase, 10) * scale);
+
+  win.dataset.qSize = String(qSize);
+  win.dataset.aSize = String(aSize);
+}
+
+
 function applyTextSizes(win) {
   const qEl = win.querySelector(".q");
   const aEl = win.querySelector(".answer");
@@ -856,8 +876,9 @@ function fitSmallWindow(win) {
   if (win.dataset.type !== "joke") return;
   if (win.classList.contains("max")) return;
 
-  pickTextSizes(win);
-  applyTextSizes(win);
+ pickTextSizes(win);
+ setFluidSizes(win);   // <- 매번 랜덤이 아니라 base*scale
+ applyTextSizes(win);
 
   // 시작 폭(랜덤) 유지
   win.style.width = clamp(win.offsetWidth || 320, MIN_W, CAP_W()) + "px";
@@ -1092,7 +1113,7 @@ function wireWindow(el) {
   if (maxBtn) {
     maxBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (isPanel) return;          // ✅ panel maximize 차단
+      if (isPanel) return; // panel maximize 차단
       toggleMax(el);
     });
   }
@@ -1123,14 +1144,18 @@ function wireWindow(el) {
   const bar = el.querySelector(".bar");
   const labelEl = el.querySelector(".label");
 
+  // 타이틀바 드래그
   if (bar) {
     bar.addEventListener("pointerdown", (e) => {
-  // 모바일/터치 환경: 탭 바 터치 시 원래 라벨 잠깐 표시
-  if (isTouchUI() && !e.target.closest(".controls")) {
-    showOriginalLabelBriefly(el, 1200);
-  }
-  startDrag(e, el);
-});
+      e.stopPropagation();
+
+      // 모바일/터치: 탭 바 터치 시 원래 라벨 잠깐 표시
+      if (isTouchUI() && !e.target.closest(".controls")) {
+        showOriginalLabelBriefly(el, 1200);
+      }
+
+      startDrag(e, el);
+    });
 
     bar.addEventListener("mouseenter", () => {
       if (el.dataset.noGlitch === "1") return;
@@ -1146,7 +1171,17 @@ function wireWindow(el) {
     });
   }
 
-  // ✅ panel은 dblclick/click maximize 이벤트 자체를 달지 않음
+  // 모바일: 바 외 영역도 드래그 가능
+  if (isTouchUI() && !isPanel) {
+    el.addEventListener("pointerdown", (e) => {
+      if (el.classList.contains("max")) return;
+      if (e.target.closest(".controls")) return; // +/x 버튼 제외
+      if (e.target.closest(".bar")) return;      // bar는 위 핸들러 사용
+      startDrag(e, el);
+    });
+  }
+
+  // panel은 dblclick/click maximize 이벤트 제외
   if (!isPanel) {
     el.addEventListener("dblclick", () => toggleMax(el));
     el.addEventListener("click", () => {
@@ -1155,7 +1190,6 @@ function wireWindow(el) {
     });
   }
 }
-
 
 
 function toggleMax(el, forceOn = false) {
@@ -1259,6 +1293,11 @@ function centerWindow(el) {
 // -------------------- dragging --------------------
 let drag = null;
 
+function preventTouchScrollWhileDragging(e) {
+  if (!drag) return;
+  e.preventDefault();
+}
+
 function startDrag(e, el) {
   if (el.classList.contains("max")) return;
 
@@ -1289,9 +1328,11 @@ function startDrag(e, el) {
   }
 
   window.addEventListener("pointermove", onDragMove, { passive: false });
+  window.addEventListener("touchmove", preventTouchScrollWhileDragging, { passive: false }); // ✅ 추가
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", endDrag);
 }
+
 
 function onDragMove(e) {
   if (!drag) return;
@@ -1319,6 +1360,7 @@ function endDrag(e) {
 
   drag = null;
   window.removeEventListener("pointermove", onDragMove);
+  window.removeEventListener("touchmove", preventTouchScrollWhileDragging); // ✅ 추가
   window.removeEventListener("pointerup", endDrag);
   window.removeEventListener("pointercancel", endDrag);
 }
@@ -1377,8 +1419,6 @@ if (window.__lastMobile !== nowMobile) {
 
   document.querySelectorAll(".win:not(.max)").forEach(w => {
   if (w.dataset.type === "joke") {
-    delete w.dataset.qSize;
-    delete w.dataset.aSize;
     fitSmallWindow(w);
   } else if (w.dataset.type === "img") {
     fitImageWindow(w);       // 핵심: 화면 작아지면 이미지 창도 다시 fit
