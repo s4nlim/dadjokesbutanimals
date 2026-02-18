@@ -662,7 +662,7 @@ const WARNING_SFX_SRCS = [
 const warningSfxPool = WARNING_SFX_SRCS.map((src) => {
   const a = new Audio(src);
   a.preload = "auto";
-  a.volume = 0.7;
+  a.volume = 0.8;
   return a;
 });
 
@@ -816,7 +816,7 @@ const WARNING_POS = {
   mobile: [
     { x: 0.40, y: 0.28 },
     { x: 0.50, y: 0.48 },
-    { x: 0.60, y: 0.66 },
+    { x: 0.60, y: 0.75 },
   ],
   pad: 8,
   jitterXDesktop: 20, // 데스크탑에서 좌우 랜덤 흔들림
