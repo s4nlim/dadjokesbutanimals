@@ -428,28 +428,71 @@ function updateFindPanel() {
   if (countEl) countEl.textContent = String(closeAttempts);
 }
 
-function togglePanel(key) {
-  const existing = panelWindows.get(key);
+function unlockWarningAudioOnce() {
+  ensureWarningAudio();
 
-  if (existing && existing.isConnected) {
-    stopLabelGlitch(existing);
-    existing.remove();
+  warningSfxPool.forEach((a) => {
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+    }).catch(() => {});
+  });
+
+  if (Array.isArray(closeSfxPool)) {
+    closeSfxPool.forEach((a) => {
+      a.play().then(() => {
+        a.pause();
+        a.currentTime = 0;
+      }).catch(() => {});
+    });
+  }
+
+  window.removeEventListener("pointerdown", unlockWarningAudioOnce);
+  window.removeEventListener("keydown", unlockWarningAudioOnce);
+}
+
+function togglePanel(rawKey) {
+  const key = (rawKey || "").trim().toLowerCase();
+  if (!PANEL_CONTENT[key]) return;
+
+  // 0) DOM 기준으로 "같은 패널"이 이미 열려 있으면 닫고 끝
+  const sameOpen = document.querySelector(`.win.info-win[data-panel-key="${key}"]`);
+  if (sameOpen) {
+    stopLabelGlitch(sameOpen);
+    sameOpen.remove();
     panelWindows.delete(key);
     setTaskButtonActive(key, false);
     return;
   }
 
+  // 1) 다른 패널 전부 닫기 (DOM 기준)
+  document.querySelectorAll(".win.info-win").forEach((win) => {
+    const k = (win.dataset.panelKey || "").trim().toLowerCase();
+    stopLabelGlitch(win);
+    win.remove();
+    if (k) {
+      panelWindows.delete(k);
+      setTaskButtonActive(k, false);
+    }
+  });
+
+  // 2) stale map 정리
+  Array.from(panelWindows.entries()).forEach(([k, w]) => {
+    if (!w || !w.isConnected) panelWindows.delete(k);
+  });
+
+  // 3) 새 패널 열기
   const el = createPanelWindow(key);
   if (!el) return;
 
   desktop.appendChild(el);
-  placePanelWindow(el);   // append 후 실측 배치
-  watchFit(el);           // 패널도 resize observe
+  placePanelWindow(el);
+  watchFit(el);
   bringToFront(el);
 
   panelWindows.set(key, el);
   setTaskButtonActive(key, true);
-  holdPanelsReadable(); // 패널 열면 일정 시간 읽기 보호
+  holdPanelsReadable();
 
   if (document.fonts?.ready) {
     document.fonts.ready.then(() => {
@@ -460,7 +503,6 @@ function togglePanel(key) {
 
   if (key === "find") updateFindPanel();
 }
-
 
 
 // -------------------- helpers --------------------
@@ -620,7 +662,7 @@ const WARNING_SFX_SRCS = [
 const warningSfxPool = WARNING_SFX_SRCS.map((src) => {
   const a = new Audio(src);
   a.preload = "auto";
-  a.volume = 0.9;
+  a.volume = 0.7;
   return a;
 });
 
@@ -769,7 +811,7 @@ const WARNING_POS = {
   desktop: [
     { x: 0.20, y: 0.20 }, // 1번째 경고
     { x: 0.50, y: 0.48 }, // 2번째 경고
-    { x: 0.80, y: 0.70 }, // 3번째 경고
+    { x: 0.80, y: 0.75 }, // 3번째 경고
   ],
   mobile: [
     { x: 0.40, y: 0.28 },
@@ -778,7 +820,7 @@ const WARNING_POS = {
   ],
   pad: 8,
   jitterXDesktop: 20, // 데스크탑에서 좌우 랜덤 흔들림
-  jitterYDesktop: 8,  // 데스크탑에서 상하 랜덤 흔들림
+  jitterYDesktop: 5,  // 데스크탑에서 상하 랜덤 흔들림
 };
 
 
