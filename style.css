@@ -41,6 +41,7 @@ body {
   position: absolute;
   width: 360px;
   min-width: 240px;
+  height: fit-content;
   background: #fff;
   border: 1px solid #cfcfcf;
   box-shadow: 0 8px 20px rgba(0,0,0,.18);
@@ -251,87 +252,6 @@ body {
   transform: translateY(1px);
 }
 
-/* ===== Info windows opened by taskbar ===== */
-.win.info-win{
-  width: min(680px, calc(100vw - 20px));
-  height: min(560px, calc(100vh - 90px));
-  border: 1px solid #cfcfcf;
-}
-
-.win.info-win .content{
-  overflow: auto;
-  padding: 22px 22px 28px;
-  background: #efefef;
-}
-
-.info-content{
-  color: #111;
-  line-height: 1.45;
-}
-
-.info-content h2{
-  margin: 0 0 14px;
-  font-size: 38px;
-  font-weight: 900;
-  letter-spacing: .01em;
-}
-
-.info-content p{
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 600;
-  max-width: 62ch;
-}
-
-.info-content h3{
-  margin: 22px 0 10px;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.info-content ul{
-  margin: 0;
-  padding-left: 18px;
-}
-
-.info-content li{
-  margin: 6px 0;
-  font-size: 17px;
-  font-weight: 600;
-}
-
-@media (max-width: 768px){
-  .taskbar{
-    height: 60px;          /* 74 -> 60 */
-    padding: 6px 5px;      /* 조금 더 슬림 */
-    gap: 5px;
-  }
-
-  .taskbar-btn{
-    flex: 1;
-    min-width: 0;
-    font-size: 17px;       /* 20 -> 17 */
-    padding: 0 4px;
-    font-weight: 800;
-  }
-
-  .win.info-win{
-    width: min(92vw, 430px) !important;
-    height: auto !important;
-    max-height: calc(100vh - 76px); /* taskbar 줄인 만큼 같이 조정 */
-  }
-
-  .win.info-win .content{
-    padding: 16px 14px 14px;
-  }
-
-  .info-content p,
-  .info-content li{
-    font-size: 16px;
-    max-width: none;
-  }
-}
-
 
 /* Keycaps (+, ×) */
 .about-content kbd{
@@ -511,8 +431,8 @@ body {
   border-left: 1px solid rgba(255,255,255,.2);
   background: transparent;
   color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 550;
+  font-size: 20px;
   line-height: 1;
   display: grid;
   place-items: center;  /* 아이콘 정중앙 */
@@ -714,56 +634,46 @@ body {
 
 /* ===== Info windows opened by taskbar ===== */
 .win.info-win{
-  width: min(680px, calc(100vw - 20px));
-  height: min(560px, calc(100vh - 90px));
+  width: fit-content;
+  max-width: min(980px, calc(100vw - 20px));  /* 화면 밖으로만 안 나가게 */
+  height: fit-content;
+  max-height: calc(100vh - 90px);            /* taskbar 고려 */
   border: 1px solid #cfcfcf;
+  overflow: hidden;
 }
 
 .win.info-win .content{
+  height: auto !important;
+  max-height: calc(100vh - 90px - 26px); /* taskbar + title bar */
   overflow: auto;
-  padding: 22px 22px 28px;
-  background: #efefef;
+  padding: 20px 20px 20px;
+  background: #ffffff;
+}
+
+.win.info-win .bar{
+  background: #16a700;
 }
 
 .info-content{
   color: #111;
   line-height: 1.45;
-}
-
-.info-content h2{
-  margin: 0 0 14px;
-  font-size: 38px;
-  font-weight: 900;
-  letter-spacing: .01em;
+  max-width: 62ch;
+  margin: 0 auto;
 }
 
 .info-content p{
   margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 600;
-  max-width: 62ch;
-}
-
-.info-content h3{
-  margin: 22px 0 10px;
   font-size: 22px;
-  font-weight: 900;
+  line-height: 1.5; 
+  font-weight: 700;
+  text-wrap: normal;
+  max-width: 85ch;
 }
 
-.info-content ul{
-  margin: 0;
-  padding-left: 18px;
-}
-
-.info-content li{
-  margin: 6px 0;
-  font-size: 17px;
-  font-weight: 600;
-}
 
 @media (max-width: 768px){
   .taskbar{
-    height: 60px;          /* 74 -> 60 */
+    height: 55px;          /* 74 -> 60 */
     padding: 6px 5px;      /* 조금 더 슬림 */
     gap: 5px;
   }
@@ -771,23 +681,22 @@ body {
   .taskbar-btn{
     flex: 1;
     min-width: 0;
-    font-size: 17px;       /* 20 -> 17 */
+    font-size: 24px;       /* 20 -> 17 */
     padding: 0 4px;
     font-weight: 800;
   }
 
   .win.info-win{
-    width: min(92vw, 430px) !important;
     height: auto !important;
     max-height: calc(100vh - 76px); /* taskbar 줄인 만큼 같이 조정 */
+    max-width: min(650px, calc(100vw - 20px));
   }
 
   .win.info-win .content{
-    padding: 16px 14px 14px;
+    padding: 12px 12px 3px;
   }
 
-  .info-content p,
-  .info-content li{
+  .info-content p{
     font-size: 16px;
     max-width: none;
   }

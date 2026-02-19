@@ -280,7 +280,7 @@ const PANEL_CONTENT = {
     label: "FIND",
     html: `
       <div class="info-content">
-        <p>TABS THAT YOU TRIED TO DELETE: <strong class="js-deleted-count">0</strong></p>
+        <p>Tabs that you tried to delete: <strong class="js-deleted-count">0</strong></p>
       </div>
     `
   }
@@ -299,23 +299,15 @@ function getPanelProfile() {
 
   if (mobile) {
     return {
-      MIN_W: 220,
-      MAX_W: Math.max(260, Math.floor(window.innerWidth - 12)),
-      MIN_H: 110,
-      // 모바일에서도 full-screen 안 가게 상한 낮춤
-      MAX_H: Math.max(180, Math.floor(freeH * 0.72)),
       BUMP: 16
     };
   }
 
   return {
-    MIN_W: 360,
-    MAX_W: Math.min(980, window.innerWidth - 24),
-    MIN_H: 150,
-    MAX_H: Math.min(760, freeH - 16),
     BUMP: 48
   };
 }
+
 
 function fitPanelWindow(win) {
   if (win.dataset.type !== "panel") return;
@@ -1166,6 +1158,7 @@ function randomPos(w = 360, h = 220) {
 function getTaskbarHeight() {
   const tb = document.querySelector(".taskbar");
   return tb ? tb.offsetHeight : 0;
+
 }
 
 function applyImageWindowSize(win, imgW, imgH) {
