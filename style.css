@@ -112,7 +112,7 @@ body {
   font-size: var(--qSize, 36px);
   line-height: 1.08;
   color: #111;
-  word-break: break-word;
+  word-break: balance;
   overflow-wrap: anywhere;
 }
 

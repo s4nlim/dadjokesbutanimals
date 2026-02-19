@@ -316,7 +316,7 @@ function fitPanelWindow(win) {
   const content = win.querySelector(".content");
   if (!content) return;
 
-  const { MIN_W, MAX_W, MIN_H, MAX_H, BUMP } = getPanelProfile();
+  const { MIN_W, MAX_W, MAX_H, BUMP } = getPanelProfile();
 
   // 1) 시작 폭
   let w = clamp(win.offsetWidth || (window.innerWidth <= 768 ? 260 : 620), MIN_W, MAX_W);
@@ -327,7 +327,7 @@ function fitPanelWindow(win) {
   while (guard-- > 0) {
     const { needH } = measureNeed(win);
     if (needH <= MAX_H || w >= MAX_W) {
-      win.style.height = clamp(needH, MIN_H, MAX_H) + "px";
+      win.style.height = Math.min(needH, MAX_H) + "px";
       break;
     }
     w = Math.min(MAX_W, w + BUMP);
@@ -349,7 +349,7 @@ function fitPanelWindow(win) {
     }
 
     w = nextW;
-    win.style.height = clamp(needH, MIN_H, MAX_H) + "px";
+    win.style.height = Math.min(needH, MAX_H) + "px";
   }
 
   syncContentBox(win);
@@ -1319,21 +1319,21 @@ function getProfile() {
 
   // mobile
   if (w <= 480) {
-    return { Q_RANGE: [8, 16], A_MULT: 1.0, MIN_W: 130, MIN_H: 95 };
+    return { Q_RANGE: [8, 16], A_MULT: 1.0, MIN_W: 120, MIN_H: 85 };
   }
 
   // tablet / small laptop
   if (w <= 1024) {
-    return { Q_RANGE: [18, 32], A_MULT: 1.12, MIN_W: 200, MIN_H: 140 };
+    return { Q_RANGE: [18, 32], A_MULT: 1, MIN_W: 180, MIN_H: 100 };
   }
 
   // desktop
   if (w <= 1440) {
-    return { Q_RANGE: [26, 46], A_MULT: 1.22, MIN_W: 240, MIN_H: 160 };
+    return { Q_RANGE: [26, 46], A_MULT: 1, MIN_W: 230, MIN_H: 100 };
   }
 
   // large desktop
-  return { Q_RANGE: [30, 54], A_MULT: 1.26, MIN_W: 260, MIN_H: 180 };
+  return { Q_RANGE: [30, 54], A_MULT: 1.26, MIN_W: 240, MIN_H: 100 };
 }
 
 const CAP_W = () => {
@@ -1844,7 +1844,7 @@ startLabelGlitch(w);
 
 function keepWindowInViewport(el) {
   const taskbarH = getTaskbarHeight();
-  const minPad = 6;
+  const minPad = 4;
 
   const maxLeft = Math.max(minPad, window.innerWidth - el.offsetWidth - minPad);
   const maxTop  = Math.max(minPad, window.innerHeight - taskbarH - el.offsetHeight - minPad);
