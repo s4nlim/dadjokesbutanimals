@@ -439,6 +439,10 @@ function unlockWarningAudioOnce() {
     });
   }
 
+  spawnSfxPool.forEach((a) => {
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+  });
+
   window.removeEventListener("pointerdown", unlockWarningAudioOnce);
   window.removeEventListener("keydown", unlockWarningAudioOnce);
 }
@@ -658,6 +662,35 @@ const warningSfxPool = WARNING_SFX_SRCS.map((src) => {
   return a;
 });
 
+// ===== tab spawn SFX =====
+const SPAWN_SFX_SRC = "audio/open.mp3"; // 원하는 mp3로
+const SPAWN_SFX_POOL_SIZE = 12;
+
+const spawnSfxPool = Array.from({ length: SPAWN_SFX_POOL_SIZE }, () => {
+  const a = new Audio(SPAWN_SFX_SRC);
+  a.preload = "auto";
+  a.volume = 0.6;
+  return a;
+});
+
+let spawnSfxCursor = 0;
+
+function playSpawnSfx() {
+  if (isMuted) return;
+
+  const a = spawnSfxPool[spawnSfxCursor];
+  spawnSfxCursor = (spawnSfxCursor + 1) % spawnSfxPool.length;
+  if (!a) return;
+
+  try {
+    a.pause();
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch {}
+}
+
+
 // ===== tab close SFX =====
 const CLOSE_SFX_SRC = "audio/delete.mp3"; // <-- 네 mp3 경로로 변경
 const CLOSE_SFX_POOL_SIZE = 8;
@@ -825,9 +858,11 @@ function setMuted(next) {
   // ✅ mute면 볼륨 0, 아니면 원래 볼륨
   const warningVol = isMuted ? 0 : 0.8;
   const closeVol   = isMuted ? 0 : 0.8;
+  const spawnVol   = isMuted ? 0 : 0.6; 
 
   warningSfxPool?.forEach(a => (a.volume = warningVol));
   closeSfxPool?.forEach(a => (a.volume = closeVol));
+  spawnSfxPool?.forEach(a => (a.volume = spawnVol));
 
   applyMuteUI();
 }
@@ -1662,7 +1697,7 @@ function spawnRandomWindow() {
   el.style.left = x + "px";
   el.style.top = y + "px";
   el.style.visibility = "visible";
-
+  playSpawnSfx();
   bringToFront(el);   // ✅ 새로 생성된 탭은 항상 최상단
   updateMaxBtn(el);
 
