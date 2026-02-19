@@ -1292,13 +1292,21 @@ function restoreBox(el) {
   el.style.position = el.dataset.prevPos || "";
 }
 
-// ✅ CSS에 의존 안 하고 JS로 확실히 최대화 프레임 적용
 function setMaxFrame(el) {
+  const taskbarH = getTaskbarHeight();
+  const pad = window.innerWidth <= 700 ? 30 : 60;
+
+  
+  const freeH = window.innerHeight - taskbarH;
+
+  const w = Math.max(220, window.innerWidth - pad * 2);
+  const h = Math.max(180, freeH - pad * 2);
+
   el.style.position = "fixed";
-  el.style.left = "4vw";
-  el.style.top = "6vh";
-  el.style.width = "92vw";
-  el.style.height = "88vh";
+  el.style.left = pad + "px";
+  el.style.top = pad + "px";
+  el.style.width = w + "px";
+  el.style.height = h + "px";
 }
 
 function clearOverlaps() {

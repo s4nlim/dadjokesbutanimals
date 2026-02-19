@@ -618,6 +618,13 @@ body {
   display:block;
 }
 
+@media (max-width: 768px){
+  .taskbar-mute img{
+  width:36px;                /* 네 일러스트에 맞춰 조절 */
+  height:36px;
+}
+}
+
 .taskbar-mute:hover{
   background: #e2e6ed;
 }
