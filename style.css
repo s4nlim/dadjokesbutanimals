@@ -11,10 +11,7 @@
 /* --- base --- */
 html, body {
   margin: 0;
-  padding-top: var(--sat);
-  padding-right: var(--sar);
-  padding-bottom: var(--sab);
-  padding-left: var(--sal);
+  padding: 0;                 /* ✅ safe-area padding 삭제 */
   width: 100%;
   height: 100%;
   min-height: 100dvh;
@@ -24,7 +21,8 @@ html, body {
 }
 
 html {
-  background: url("imgs/bg.jpg") center / cover no-repeat fixed;
+  background: url("imgs/bg.jpg") center / cover no-repeat; /* ✅ 일단 fixed 빼는 걸 추천 */
+  /* 필요하면 나중에 fixed 다시 테스트 */
 }
 
 body {
@@ -36,17 +34,19 @@ body {
 /* 기존 desktop */
 .desktop{
   position: fixed;
-  top: var(--sat);
-  right: var(--sar);
-  bottom: var(--sab);
-  left: var(--sal);
-  inset: 0;
+  inset: 0;                   /* ✅ 화면 전체 덮기 */
   width: 100%;
   height: 100dvh;
   min-height: -webkit-fill-available;
   overflow: hidden;
   background: transparent;
   cursor: url("imgs/cursor.png") 0 0, auto;
+
+  /* ✅ UI만 안전영역 안으로 */
+  padding-top: var(--sat);
+  padding-right: var(--sar);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
 }
 
 
