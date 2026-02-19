@@ -35,6 +35,7 @@ body {
 .desktop{
   position: fixed;
   inset: 0;                   /* ✅ 화면 전체 덮기 */
+  padding: var(--sat) var(--sar) var(--sab) var(--sal);
   width: 100%;
   height: 100dvh;
   min-height: -webkit-fill-available;
