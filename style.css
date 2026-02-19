@@ -647,15 +647,13 @@ body {
 }
 
 .taskbar-btn{
-  min-width: 110px;
+  min-width: 55px;
   padding: 0 18px;
   border: 2px solid #6f7684;
   border-top-color: #f3f5f8;
   border-left-color: #f3f5f8;
   background: #d7dbe2;
   color: #000;
-  font-weight: 900;
-  font-size: 24px;
   line-height: 1;
   letter-spacing: .01em;
   cursor: url("imgs/clicker.png") 0 0, auto;
@@ -667,8 +665,44 @@ body {
   background: #e2e6ed;
 }
 
-.taskbar-btn.is-active,
+.taskbar-btn.is-active, .taskbar-mute.is-active,
 .taskbar-btn[aria-pressed="true"]{
+  background: #c6cbd3;
+  border-top-color: #6f7684;
+  border-left-color: #6f7684;
+  border-right-color: #f3f5f8;
+  border-bottom-color: #f3f5f8;
+  box-shadow: inset 2px 2px 0 #7a8190, inset -1px -1px 0 #ffffff;
+  transform: translateY(1px);
+}
+
+.taskbar-mute{
+  margin-left:auto;          /* ✅ 오른쪽으로 밀기 */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 0px;
+  min-width: 50px;
+  border: 2px solid #6f7684;
+  border-top-color: #f3f5f8;
+  border-left-color: #f3f5f8;
+  background: #d7dbe2;
+  cursor: url("imgs/clicker.png") 0 0, auto;
+  box-shadow: inset -1px -1px 0 #7a8190, inset 1px 1px 0 #ffffff;
+  transition: background .12s ease, box-shadow .12s ease, transform .08s ease;
+}
+
+.taskbar-mute img{
+  width:40px;                /* 네 일러스트에 맞춰 조절 */
+  height:40px;
+  display:block;
+}
+
+.taskbar-mute:hover{
+  background: #e2e6ed;
+}
+
+.taskbar-mute[data-sound="on"]{
   background: #c6cbd3;
   border-top-color: #6f7684;
   border-left-color: #6f7684;

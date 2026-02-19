@@ -804,6 +804,81 @@ function createWarningWindow(message, stepIdx = 0) {
   return el;
 }
 
+// ===== MUTE BUTTON (clean) =====
+const SOUND_ON_SRC  = "imgs/sound-on.png";   // 네 일러스트 경로
+const SOUND_OFF_SRC = "imgs/sound-off.png";  // 네 일러스트 경로
+
+let isMuted = true; // ✅ 기본 자동 mute
+
+function applyMuteUI() {
+  const btn = document.getElementById("muteBtn");
+  const icon = document.getElementById("muteIcon");
+  if (!btn || !icon) return; // ✅ DOM 없으면 그냥 패스(에러 방지)
+
+  // 아이콘
+  icon.src = isMuted ? SOUND_OFF_SRC : SOUND_ON_SRC;
+  icon.alt = isMuted ? "Sound off" : "Sound on";
+
+  // ✅ sound ON일 때 눌린(active)처럼 보이게
+  btn.classList.toggle("is-active", !isMuted);
+
+  // 접근성/상태표시(원하면 유지)
+  btn.dataset.sound = isMuted ? "off" : "on";
+  btn.setAttribute("aria-pressed", String(!isMuted)); // on일 때 true로
+}
+
+function setMuted(next) {
+  isMuted = !!next;
+
+  // ✅ mute면 볼륨 0, 아니면 원래 볼륨
+  const warningVol = isMuted ? 0 : 0.8;
+  const closeVol   = isMuted ? 0 : 0.8;
+
+  warningSfxPool?.forEach(a => (a.volume = warningVol));
+  closeSfxPool?.forEach(a => (a.volume = closeVol));
+
+  applyMuteUI();
+}
+
+// ✅ 사운드 재생 함수들: mute면 바로 리턴(확실하게)
+function playCloseSfx() {
+  if (isMuted) return;
+  const a = closeSfxPool[closeSfxCursor];
+  closeSfxCursor = (closeSfxCursor + 1) % closeSfxPool.length;
+  if (!a) return;
+
+  try {
+    a.pause();
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch {}
+}
+
+function playWarningSfx(stepIdx = 0) {
+  if (isMuted) return;
+  const i = Math.min(stepIdx, warningSfxPool.length - 1);
+  const a = warningSfxPool[i];
+  if (!a) return;
+
+  try {
+    a.pause();
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  } catch {}
+}
+
+// ✅ DOM 준비된 다음에만 버튼 이벤트/초기 상태 세팅
+document.addEventListener("DOMContentLoaded", () => {
+  setMuted(true);
+
+  document.getElementById("muteBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setMuted(!isMuted);
+  });
+});
+
+
 
 
 // --- warning placement config (여기 숫자 바꿔서 위치 조절) ---
